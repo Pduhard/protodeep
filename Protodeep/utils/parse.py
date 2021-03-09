@@ -5,6 +5,7 @@ from Protodeep.initializers.RandomNormal import RandomNormal
 from Protodeep.initializers.Zeros import Zeros
 from Protodeep.activations.Relu import Relu
 from Protodeep.activations.Softmax import Softmax
+from Protodeep.activations.Sigmoid import Sigmoid
 from Protodeep.optimizers.SGD import SGD
 from Protodeep.optimizers.Adagrad import Adagrad
 from Protodeep.optimizers.RMSProp import RMSProp
@@ -90,6 +91,8 @@ def parse_activation(activation):
     activation = activation.lower()
     if activation == "softmax":
         return Softmax()
+    elif activation == "sigmoid":
+        return Sigmoid()
     elif activation == "relu":
         return Relu()
     else:

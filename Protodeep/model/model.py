@@ -128,7 +128,7 @@ class Model:
         for layer in self.layers:
             layer.reset_gradients()
 
-    @timer
+    # @timer
     def fit(self, features, targets, epochs, batch_size=32,
             validation_data=None, callbacks=None):
 
