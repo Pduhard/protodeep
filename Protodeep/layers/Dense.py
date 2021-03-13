@@ -128,3 +128,12 @@ class Dense(Layer):
         self.b_grad += z_dp
         self.dloss = np.matmul(self.weights, z_dp)
         return self.dloss
+
+    def get_weights(self):
+        return [self.weights, self.biases]
+
+    def set_weights(self, weights):
+        if len(weights) != 2:
+            print('chelouuuu set weights dans dense')
+        self.weights = weights[0]
+        self.biases = weights[1]

@@ -54,6 +54,7 @@ if __name__ == "__main__":
     print(dataset.test_features.shape)
     # print(dataset.features.shape)
     # print(numpy.min(model.weights[0]))
+    # model.load_weights()
     history = model.fit(
         features=dataset.features,
         targets=dataset.targets,
@@ -65,6 +66,7 @@ if __name__ == "__main__":
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
     )
+    # model.save_weights()
     plt.plot(history['accuracy'])
     plt.plot(history['val_accuracy'])
     plt.ylabel('accuracy')

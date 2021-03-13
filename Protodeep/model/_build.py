@@ -65,10 +65,6 @@ def build_graph(self, inputs, outputs):
         for layer
         in sorted(self.graph, key=lambda l: self.graph[l]['order'])
     ]
-    # 
-    # for k, v in self.graph.items():
-    #     for prev in v['prevs']:
-    #         ldict[prev].output_connectors.next_layers.append(ldict[k])
 
     self.inputs = [i.layer for i in inputs]
     self.outputs = [o.layer for o in outputs]

@@ -1,31 +1,16 @@
 import numpy as np
-import time
-import functools
+import json
 # from numba import njit
 # from numba import jit, vectorize
 # from activations.Relu import Relu
 # from activations.Softmax import Softmax
 from Protodeep.utils.format import cwrap_list, wrap_tlist
+from Protodeep.utils.debug import class_timer
 
 epsilon = 1e-8
 
-# relu = Relu()
-# softmax = Softmax()
 
-
-def timer(func):
-    """Print the runtime of the decorated function"""
-    @functools.wraps(func)
-    def wrapper_timer(*args, **kwargs):
-        start_time = time.perf_counter()    # 1
-        value = func(*args, **kwargs)
-        end_time = time.perf_counter()      # 2
-        run_time = end_time - start_time    # 3
-        print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
-        return value
-    return wrapper_timer
-
-
+@class_timer
 class Model:
     layers = []
     weights = []
@@ -128,7 +113,6 @@ class Model:
         for layer in self.layers:
             layer.reset_gradients()
 
-    # @timer
     def fit(self, features, targets, epochs, batch_size=32,
             validation_data=None, callbacks=None):
 
@@ -238,3 +222,27 @@ class Model:
             total_param += param
         print('Total params:', '{:,}'.format(total_param))
         print('_' * rowsize)
+
+    def save_weights(self, file_name='model_weights.json'):
+        with open(file_name, 'w+') as outfile:
+            dc = {
+                layer.name: [
+                    weight.tolist() for weight in layer.get_weights()
+                ] for layer in self.flatten_graph if layer.trainable
+            }
+            json.dump(dc, outfile)
+        return self
+
+    def load_weights(self, file_name='model_weights.json'):
+
+        with open(file_name, 'r+') as outfile:
+            dataset = json.load(outfile)
+            for layer in self.flatten_graph:
+                if layer.name in dataset:
+                    layer.set_weights(
+                        [np.array(weight) for weight in dataset[layer.name]]
+                    )
+        self.weights = []
+        self.gradients = []
+        self.build()
+        return self
