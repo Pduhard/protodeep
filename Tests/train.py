@@ -59,7 +59,7 @@ if __name__ == "__main__":
         features=dataset.features,
         targets=dataset.targets,
         epochs=500,
-        batch_size=32,
+        batch_size=16,
         validation_data=(dataset.test_features, dataset.test_targets)
         ,callbacks=[EarlyStopping(monitor="val_loss", patience=6)]
     )

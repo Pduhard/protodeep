@@ -49,6 +49,8 @@ class Model:
                     inputs = np.array(next_l.dloss)
                 else:
                     inputs += next_l.dloss
+            # print(inputs.shape)
+            # quit()
             layer.backward_pass(inputs)
 
     def predict(self, feature):
@@ -73,11 +75,12 @@ class Model:
         dataset_size = len(features[0])
         section_size_rest = dataset_size % batch_size
         section_nb = (dataset_size - section_size_rest) // batch_size
-        section = [batch_size * i for i in range(1, section_nb + 1)]
+        rest = 1 if (dataset_size - section_size_rest) % batch_size != 0 else 0
+        section = [batch_size * i for i in range(1, section_nb + rest)]
         return (
             [np.split(f, section) for f in features],
             [np.split(t, section) for t in targets],
-            section_nb + 1
+            section_nb + rest
         )
 
     def init_logs(self):
@@ -142,6 +145,9 @@ class Model:
                 targets,
                 batch_size
             )
+            print(type(bfeatures))
+            print(type(bfeatures[0]))
+            print(type(bfeatures[0][0]))
             # print(len(btargets[0]))
             # print(btargets[0][0].shape)
             # print(len(btargets))
@@ -154,24 +160,46 @@ class Model:
                 else:
                     mini_batch_size = batch_size
                 remaining_features -= batch_size
-                for i in range(mini_batch_size):
-                    feature = [bf[s][i] for bf in bfeatures]
-                    target = [bt[s][i] for bt in btargets]
-                    pred = self.predict(feature)
-                    dp_loss = []
-                    for p, t in zip(pred, target):
-                        loss += self.loss(p, t)
-                        dp_loss.append(self.loss.dr(p, t))
-                    for metric in self.metrics:
-                        metric.update_state(pred, target)
-                    self.backpropagate(dp_loss)
+                print('mini batch size', mini_batch_size)
+                feature = [bf[s] for bf in bfeatures]
+                target = [bt[s] for bt in btargets]
+                pred = self.predict(feature)
+                # print(pred)
+                print(len(pred))
+    ##TODO
+                dp_loss = []
+                for p, t in zip(pred, target):
+                    # print(p, t)
+                    # print(p[0])
+                    # print(t[0])
+                    loss += self.loss(p, t)
+                    print(self.loss(p, t))
+                    dp_loss.append(self.loss.dr(p, t))
+                for metric in self.metrics:
+                    metric.update_state(pred, target)
+                self.backpropagate(dp_loss)
+                print(loss)
+                # self.gradients
+
+    ##OLD VERSION
+                # for i in range(mini_batch_size):
+                #     feature = [bf[s][i] for bf in bfeatures]
+                #     target = [bt[s][i] for bt in btargets]
+                #     pred = self.predict(feature)
+                #     dp_loss = []
+                #     for p, t in zip(pred, target):
+                #         loss += self.loss(p, t)
+                #         dp_loss.append(self.loss.dr(p, t))
+                #     for metric in self.metrics:
+                #         metric.update_state(pred, target)
+                    # self.backpropagate(dp_loss)
 
                 # We need to do that in the backprop when matrix to tensor
-                for g in self.gradients:
-                    g /= batch_size
+                # for g in self.gradients:
+                #     g /= batch_size
                 # ##########
                 self.optimizer.apply_gradient(self.weights, self.gradients)
-            loss /= self.train_size
+            loss /= bacth_nb
             self.update_metrics(loss)
             if validation_data is not None:
                 self.evaluate(validation_data)

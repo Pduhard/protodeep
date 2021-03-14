@@ -17,16 +17,22 @@ epsilon = 1e-8
 # def vsoftmax(x, xsum):
 #     return np.exp(x) / (xsum + epsilon)
 
-@njit
-def softmax(inputs):
+# @njit
+def softmax(inputs):  # need to verify when dim != 2
+    # print(np.max(np.abs(inputs)))
+    # quit()
     while (np.max(np.abs(inputs)) > 10):
         inputs /= 2
-    xsum = np.sum(np.exp(inputs))
-    return np.array([np.exp(x) / (xsum + epsilon) for x in inputs])
+    # if len(inputs.shape )
+    xsum = np.sum(np.exp(inputs), axis=1)[:, np.newaxis]
+    # print((np.exp(inputs) / (xsum + epsilon)).shape)
+    # print(xsum.shape)
+    # quit()
+    return np.exp(inputs) / (xsum + epsilon)
     # return (np.vectorize(vsoftmax)(inputs, xsum))
 
 
-@njit
+# @njit
 def softmax_derivative(inputs):
     activ = softmax(inputs)
     return activ * (1 - activ)
@@ -38,6 +44,8 @@ class Softmax(Activation):
         self.axis = axis
 
     def __call__(self, inputs):
+        # print(inputs.shape)
+        # quit()
         return softmax(inputs)
 
     def derivative(self, inputs):

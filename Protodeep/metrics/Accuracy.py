@@ -18,12 +18,13 @@ class Accuracy:
         return self.count / self.total
 
     def update_state(self, prediction, target):
-        # print(prediction, target)
+        # print(prediction[0].shape, target)
         # quit()
+
         for i in range(len(prediction)):
-            self.total += 1
-            if np.argmax(prediction[i]) == np.argmax(target[i]):
-                self.count += 1
+            self.total += prediction[i].shape[0]
+            self.count += np.sum(np.argmax(prediction[i], axis=-1) == np.argmax(target[i], axis=-1))
+                # self.count += 1
         # if isinstance(prediction, list):
         #     for i in range(len(prediction)):
         #         self.total += 1

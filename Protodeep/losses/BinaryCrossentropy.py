@@ -9,6 +9,8 @@ class BinaryCrossentropy():
     def __call__(self, prediction, target):
         p = prediction
         t = target
+        print((-np.mean(t * np.log(p) + (1 - t) * np.log(1 - p))).shape, target.dtype)
+        # quit()
         return -np.mean(t * np.log(p) + (1 - t) * np.log(1 - p))
 
     def dr(self, prediction, target):
