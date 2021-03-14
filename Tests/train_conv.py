@@ -169,6 +169,7 @@ if __name__ == "__main__":
     # print(dataset.test_features.shape)
     # print(dataset.features.shape)
     # print(numpy.min(model.weights[0]))
+    print(dataset.features.shape)
     history = model.fit(
         features=dataset.features,
         targets=dataset.targets,

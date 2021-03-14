@@ -6,7 +6,7 @@ except ImportError:
         return func
 
 from Protodeep.utils.parse import parse_activation, parse_initializer
-from Protodeep.utils.debug import timer, class_timer
+from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
 # def parse_initializer(initializer):
 #     if isinstance(initializer, str) is False:
@@ -36,6 +36,7 @@ from Protodeep.layers.Layer import Layer
 # @njit
 def dense_preactiv(inputs, weights, biases):
     return np.dot(inputs, weights) + biases
+
 
 @class_timer
 class Dense(Layer):
@@ -111,12 +112,9 @@ class Dense(Layer):
         self.w_grad.fill(0)
         self.b_grad.fill(0)
 
-    # @timer
     def forward_pass(self, inputs):
         self.i_val = inputs
         self.z_val = dense_preactiv(inputs, self.weights, self.biases)
-        # print(inputs)
-        # self.z_val = np.matmul(inputs, self.weights) + self.biases
         self.a_val = self.activation(self.z_val)
         return self.a_val
 

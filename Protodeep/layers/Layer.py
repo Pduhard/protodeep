@@ -32,11 +32,11 @@ class Layer:
     def backward_pass(self, inputs):
         return inputs
 
-    def get_weights(self):
-        return None
+    # def get_weights(self):
+    #     return None
 
-    def set_weights(self, weights):
-        return None
+    # def set_weights(self, weights):
+    #     return None
 
     @classmethod
     def print_dico(self):
