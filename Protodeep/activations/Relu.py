@@ -27,14 +27,14 @@ except ImportError:
 
 @njit
 def relu_1d_derivative(inputs):
-    return np.array([1 if x > 0 else 0 for x in inputs])
+    return np.array([1. if x > 0 else 0. for x in inputs])
 
 @njit
 def relu_2d_derivative(inputs):
     output = np.empty(inputs.shape)
     for i in range(inputs.shape[0]):
         for j in range(inputs.shape[1]):
-            output[i, j] = 1 if inputs[i, j] > 0 else 0
+            output[i, j] = 1. if inputs[i, j] > 0 else 0.
     return output
 
 
@@ -44,7 +44,7 @@ def relu_3d_derivative(inputs):
     for i in range(inputs.shape[0]):
         for j in range(inputs.shape[1]):
             for k in range(inputs.shape[2]):
-                output[i, j, k] = 1 if inputs[i, j, k] > 0 else 0
+                output[i, j, k] = 1. if inputs[i, j, k] > 0 else 0.
     return output
 
 # def relu_derivative(inputs):

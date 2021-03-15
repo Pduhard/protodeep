@@ -145,9 +145,9 @@ class Model:
                 targets,
                 batch_size
             )
-            print(type(bfeatures))
-            print(type(bfeatures[0]))
-            print(type(bfeatures[0][0]))
+            # print(type(bfeatures))
+            # print(type(bfeatures[0]))
+            # print(type(bfeatures[0][0]))
             # print(len(btargets[0]))
             # print(btargets[0][0].shape)
             # print(len(btargets))
@@ -160,25 +160,25 @@ class Model:
                 else:
                     mini_batch_size = batch_size
                 remaining_features -= batch_size
-                print('mini batch size', mini_batch_size)
+                # print('mini batch size', mini_batch_size)
                 feature = [bf[s] for bf in bfeatures]
                 target = [bt[s] for bt in btargets]
                 pred = self.predict(feature)
                 # print(pred)
-                print(len(pred))
-    ##TODO
+                # print(len(pred))
+    ## TODO
                 dp_loss = []
                 for p, t in zip(pred, target):
                     # print(p, t)
                     # print(p[0])
                     # print(t[0])
                     loss += self.loss(p, t)
-                    print(self.loss(p, t))
+                    # print(self.loss(p, t))
                     dp_loss.append(self.loss.dr(p, t))
                 for metric in self.metrics:
                     metric.update_state(pred, target)
                 self.backpropagate(dp_loss)
-                print(loss)
+                # print(loss)
                 # self.gradients
 
     ##OLD VERSION

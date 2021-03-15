@@ -14,12 +14,12 @@ def evaluate(self, validation_data):
     # for i in range(test_size):
     #     feature = [f[i] for f in features]
     #     target = [t[i] for t in targets]
-
+    # print(test_size)
     pred = self.predict(features)
 
     for p, t in zip(pred, targets):
-        print(p.shape)
-        print(t.shape)
+        # print(p.shape)
+        # print(t.shape)
         loss += self.loss(p, t)
 
     for metric in self.metrics:

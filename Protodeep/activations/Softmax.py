@@ -1,7 +1,7 @@
 from Protodeep.activations.Activation import Activation
 import numpy as np
 try:
-    from numba import njit
+    from numba import njit, jit
 except ImportError:
     def njit(func):
         return func
@@ -17,22 +17,36 @@ epsilon = 1e-8
 # def vsoftmax(x, xsum):
 #     return np.exp(x) / (xsum + epsilon)
 
-# @njit
+@njit
 def softmax(inputs):  # need to verify when dim != 2
     # print(np.max(np.abs(inputs)))
     # quit()
-    while (np.max(np.abs(inputs)) > 10):
-        inputs /= 2
+    # while (np.max(np.abs(inputs)) > 10):
+    #     inputs /= 2
     # if len(inputs.shape )
-    xsum = np.sum(np.exp(inputs), axis=1)[:, np.newaxis]
+    # xsum = np.array([np.sum(np.exp(i)) for i in inputs])
+    # for i in range()
+    # print(xsum)
+    # xsum = np.sum(np.exp(inputs), axis=1)[:, np.newaxis]
     # print((np.exp(inputs) / (xsum + epsilon)).shape)
     # print(xsum.shape)
     # quit()
-    return np.exp(inputs) / (xsum + epsilon)
+    # exp(x) / exp(X)
+    sft = np.empty(inputs.shape)
+    for i in range(inputs.shape[0]):
+        while (np.max(np.abs(inputs[i])) > 10):
+            inputs[i] /= 2
+        for j in range(inputs.shape[1]):
+            sft[i, j] = np.exp(inputs[i, j]) / (np.sum(np.exp(inputs[i])))
+    # print(sft.dtype)
+    return sft
+    # return np.exp(inputs) / xsum[:, np.newaxis] + epsilon
+    # return np.array([np.exp(x) / (xsum + epsilon) for x in inputs])
+    # return np.array([np.exp(inputs[i]) / (xsum[i] + epsilon) for i in range(inputs.shape[0])])
     # return (np.vectorize(vsoftmax)(inputs, xsum))
 
 
-# @njit
+@njit
 def softmax_derivative(inputs):
     activ = softmax(inputs)
     return activ * (1 - activ)

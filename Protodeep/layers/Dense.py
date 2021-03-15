@@ -124,27 +124,42 @@ class Dense(Layer):
     def backward_pass(self, inputs):
         a_dp = self.activation.derivative(self.z_val)
         z_dp = inputs * a_dp
-        # print(a_dp.shape)
-        # print(z_dp.shape)
-        # print(self.i_val.shape)
-        # print(self.w_grad.shape)
-
-        # self.w_grad = z_dp[:, :, np.newaxis] * self.i_val[:, np.newaxis, :] / inputs.shape[0]
-        # [1, 1, 2, ]
-
-        self.w_grad += np.matmul(z_dp.T, self.i_val).T / inputs.shape[0]
-        # print('ok')
-        # self.w_grad += np.outer(z_dp, self.i_val).T / inputs.shape[0]
-
-        # (2,) (32,) ==> (32, 2)
-        # (16, 2) (16, 32) ==> (32, 2)
-        # z_dp i_val ==> 
-        # print(np.sum(z_dp, axis=0).shape)
-        self.b_grad += np.sum(z_dp, axis=0) / inputs.shape[0]
-        self.dloss = np.matmul(self.weights, z_dp.T).T
-        # print(self.dloss.shape)
-        # print(self.i_val.shape)
+        dloss = []
+        for i in range(inputs.shape[0]):
+            self.w_grad += np.outer(z_dp[i], self.i_val[i]).T
+            self.b_grad += z_dp[i]
+            dloss.append(np.matmul(self.weights, z_dp[i]))
+            # self.dloss = np.matmul(self.weights, z_dp.T).T
+        self.w_grad /= inputs.shape[0]
+        self.b_grad /= inputs.shape[0]
+        self.dloss = np.array(dloss)
         return self.dloss
+        
+
+    # def backward_pass(self, inputs):
+    #     a_dp = self.activation.derivative(self.z_val)
+    #     z_dp = inputs * a_dp
+    #     # print(a_dp.shape)
+    #     # print(z_dp.shape)
+    #     # print(self.i_val.shape)
+    #     # print(self.w_grad.shape)
+
+    #     # self.w_grad = z_dp[:, :, np.newaxis] * self.i_val[:, np.newaxis, :] / inputs.shape[0]
+    #     # [1, 1, 2, ]
+
+    #     self.w_grad += np.matmul(z_dp.T, self.i_val).T / inputs.shape[0]
+    #     # print('ok')
+    #     # self.w_grad += np.outer(z_dp, self.i_val).T / inputs.shape[0]
+
+    #     # (2,) (32,) ==> (32, 2)
+    #     # (16, 2) (16, 32) ==> (32, 2)
+    #     # z_dp i_val ==> 
+    #     # print(np.sum(z_dp, axis=0).shape)
+    #     self.b_grad += np.sum(z_dp, axis=0) / inputs.shape[0]
+    #     self.dloss = np.matmul(self.weights, z_dp.T).T
+    #     # print(self.dloss.shape)
+    #     # print(self.i_val.shape)
+    #     return self.dloss
 
     def get_weights(self):
         return [self.weights, self.biases]
