@@ -48,7 +48,8 @@ class Flatten(Layer):
 
     def forward_pass(self, inputs):
         self.input_shape = inputs.shape
-        self.a_val = inputs.flatten()
+
+        self.a_val = inputs.reshape(inputs.sh) nened to reshape
         return self.a_val
         # print(inputs.shape)
         # quit()

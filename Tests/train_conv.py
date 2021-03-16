@@ -32,7 +32,7 @@ def parse_options():
     options = {
         "optimizer": parse_option_value("-o", dflt=None),
         "epoch": parse_option_value("-e", dflt="100"),
-        'csv_name': parse_option_value('-n', dflt='data.csv')
+        'csv_name': parse_option_value('-n', dflt='mnist_784.csv')
         }
     if check_option(options) is False:
         usage()

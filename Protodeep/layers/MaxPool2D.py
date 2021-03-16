@@ -12,37 +12,39 @@ from Protodeep.layers.Layer import Layer
 
 
 @njit
-def maxpool(z_val, z_index, inputs, H, PH, W, PW, SH, SW, F):
-    oh = 0
-    for h in range(0, H - PH, SH):
-        ow = 0
-        for w in range(0, W - PW, SW):
-            for f in range(F):
-                max_value = -np.inf
-                max_index = None
-                for ph in range(PH):
-                    for pw in range(PW):
-                        value = inputs[h + ph, w + pw, f]
-                        if value > max_value:
-                            max_value = value
-                            max_index = (h + ph, w + ph, f)
-                z_val[oh, ow, f] = max_value
-                z_index[oh, ow, f] = max_index
-                # print(self.z_index[oh, ow, f])
-            # quit()
-            ow += 1
-        oh += 1
+def maxpool(z_val, z_index, inputs, N, H, PH, W, PW, SH, SW, F):
+    for n in range(N):
+        oh = 0
+        for h in range(0, H - PH, SH):
+            ow = 0
+            for w in range(0, W - PW, SW):
+                for f in range(F):
+                    max_value = -np.inf
+                    max_index = None
+                    for ph in range(PH):
+                        for pw in range(PW):
+                            value = inputs[n, h + ph, w + pw, f]
+                            if value > max_value:
+                                max_value = value
+                                max_index = (h + ph, w + ph, f)
+                    z_val[n, oh, ow, f] = max_value
+                    z_index[n, oh, ow, f] = max_index
+                    # print(self.z_index[oh, ow, f])
+                # quit()
+                ow += 1
+            oh += 1
 
 
 @njit
-def maxpool_derivative(z_index, inputs, dx, H, W, F):
-    for h in range(H):
-        for w in range(W):
-            for f in range(F):
-                dh, dw, df = z_index[h, w, f]
-                # print(index)
-                # print(inputs[h, w, f])
-                dx[dh, dw, df] += inputs[h, w, f]
+def maxpool_derivative(z_index, inputs, dx, N, H, W, F):
+    for n in range(N):
+        for h in range(H):
+            for w in range(W):
+                for f in range(F):
+                    dh, dw, df = z_index[n, h, w, f]
+                    # print(index)
+                    # print(inputs[h, w, f])
+                    dx[dh, dw, df] += inputs[n, h, w, f]
 
 @class_timer
 class MaxPool2D(Layer):
@@ -103,25 +105,30 @@ class MaxPool2D(Layer):
         # return self.units
 
     def forward_pass(self, inputs):
-        # print(inputs.shape)
+        print(inputs.shape)
         # print(len(inputs.shape))
         # quit()
         self.i_val = inputs
-        H, W, F = inputs.shape
+        N, H, W, F = inputs.shape
         PH, PW = self.pool_size
         SH, SW = self.strides
-
-        self.z_val = np.zeros(shape=self.output_shape)
-        self.z_index = np.zeros(shape=(*self.output_shape, len(inputs.shape)), dtype=int)
+        output_shape = (
+            N,
+            int((H - PH) / SH + 1),  # need to check what append when not round number
+            int((W - PW) / SW + 1),
+            F,
+        )   
+        self.z_val = np.zeros(shape=output_shape)
+        self.z_index = np.zeros(shape=(*output_shape, len(inputs.shape) - 1), dtype=int)
         # self.z_index[0, 0, 0] = (0,1,2)
         # print(self.z_index[0, 0])
         # quit()
         # print(self.z_val.shape)
         # quit()
-        oh = 0
+        # oh = 0
         # plt.imshow(inputs.T[0].T, cmap='gray')
         # plt.show()
-        maxpool(self.z_val, self.z_index, inputs, H, PH, W, PW, SH, SW, F)
+        maxpool(self.z_val, self.z_index, inputs, N, H, PH, W, PW, SH, SW, F)
 
         # for h in range(0, H - PH, SH):
         #     ow = 0
@@ -154,10 +161,10 @@ class MaxPool2D(Layer):
         # print(self.i_val.shape)
 
         # print(inputs.shape)
-        W, H, F = inputs.shape
+        N, H, W, F = inputs.shape
         dx = np.zeros(self.i_val.shape)
         # print(dx[0, 0, 11])
-        maxpool_derivative(self.z_index, inputs, dx, H, W, F)
+        maxpool_derivative(self.z_index, inputs, dx, N, H, W, F)
         # for h in range(H):
         #     for w in range(W):
         #         for f in range(F):

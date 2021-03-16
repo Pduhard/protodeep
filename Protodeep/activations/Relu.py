@@ -47,6 +47,16 @@ def relu_3d_derivative(inputs):
                 output[i, j, k] = 1. if inputs[i, j, k] > 0 else 0.
     return output
 
+
+@njit
+def relu_4d_derivative(inputs):
+    output = np.empty(inputs.shape)
+    for n in range(inputs.shape[0]):
+        for i in range(inputs.shape[1]):
+            for j in range(inputs.shape[2]):
+                for k in range(inputs.shape[3]):
+                    output[n, i, j, k] = 1. if inputs[n, i, j, k] > 0 else 0.
+    return output
 # def relu_derivative(inputs):
     # return np.array([1 if x > 0 else 0 for x in inputs.flat])
 
@@ -60,6 +70,7 @@ def relu_3d_derivative(inputs):
 @njit
 def relu_1d(inputs):
     return (np.array([max(0., x) for x in inputs]))
+
 
 @njit
 def relu_2d(inputs):
@@ -80,6 +91,16 @@ def relu_3d(inputs):
     return output
 
 
+@njit
+def relu_4d(inputs):
+    output = np.empty(inputs.shape)
+    for n in range(inputs.shape[0]):
+        for i in range(inputs.shape[1]):
+            for j in range(inputs.shape[2]):
+                for k in range(inputs.shape[3]):
+                    output[n, i, j, k] = max(0., inputs[n, i, j, k])
+    return output
+
 class Relu(Activation):
 
     def __init__(self, max_value=None, negative_slope=0, threshold=0):
@@ -94,6 +115,8 @@ class Relu(Activation):
             return relu_2d(inputs)
         elif inputs.ndim == 3:
             return relu_3d(inputs)
+        elif inputs.ndim == 4:
+            return relu_4d(inputs)
 
     def derivative(self, inputs):
         if inputs.ndim == 1:
@@ -102,3 +125,5 @@ class Relu(Activation):
             return relu_2d_derivative(inputs)
         elif inputs.ndim == 3:
             return relu_3d_derivative(inputs)
+        elif inputs.ndim == 4:
+            return relu_4d_derivative(inputs)
