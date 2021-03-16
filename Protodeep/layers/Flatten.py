@@ -48,8 +48,9 @@ class Flatten(Layer):
 
     def forward_pass(self, inputs):
         self.input_shape = inputs.shape
-
-        self.a_val = inputs.reshape(inputs.sh) nened to reshape
+        batch_size = inputs.shape[0]
+        # print(inputs.shape)
+        self.a_val = inputs.reshape(batch_size, int(np.prod(inputs.shape) / batch_size))
         return self.a_val
         # print(inputs.shape)
         # quit()

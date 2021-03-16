@@ -58,7 +58,7 @@ def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
 @njit
 def dilate(arr, SH, SW):
     N, H, W, C = arr.shape
-    dilated = np.zeros(((H - 1) * (SH - 1) + H, (W - 1) * (SW - 1) + W, C))
+    dilated = np.zeros((N, (H - 1) * (SH - 1) + H, (W - 1) * (SW - 1) + W, C))
     for n in range(N):
         for h in range(H):
             for w in range(W):
@@ -175,11 +175,11 @@ class Conv2D(Layer):
 
 
     def forward_pass(self, inputs):
-        """ input should be a 3d array (H, W, C) """
+        """ input should be a 4d array (N, H, W, C) """
         
         # plt.imshow(inputs, cmap=plt.get_cmap('gray'))
         # plt.show()
-        print(inputs.shape)
+        # print(inputs.shape)
         if len(inputs.shape) < 4:
             inputs = inputs[:, :, :, np.newaxis]
         
@@ -214,44 +214,44 @@ class Conv2D(Layer):
         # plt.show()
         # self.z_val = np.matmul(inputs, self.weights) + self.biases
         self.a_val = self.activation(self.z_val)
-        print(type(self.a_val))
+        # print(type(self.a_val))
         return self.a_val
 
-    def old_forward_pass(self, inputs):
-        """ input should be a 3d array (H, W, C) """
+    # def old_forward_pass(self, inputs):
+    #     """ input should be a 3d array (H, W, C) """
         
-        # plt.imshow(inputs, cmap=plt.get_cmap('gray'))
-        # plt.show()
-        # print(inputs)
-        if len(inputs.shape) < 3:
-            inputs = inputs[:, :, np.newaxis]
+    #     # plt.imshow(inputs, cmap=plt.get_cmap('gray'))
+    #     # plt.show()
+    #     # print(inputs)
+    #     if len(inputs.shape) < 3:
+    #         inputs = inputs[:, :, np.newaxis]
         
-        # plt.imshow(inputs.reshape(28, 28), cmap=plt.get_cmap('gray'))
-        # plt.show()
-        # print(inputs)
-        # print(inputs.shape)
-        # print(len(inputs.shape))
-        # quit()
-        H, W, C = inputs.shape
-        SH, SW = self.strides
-        KH, KW = self.kernel_size
-        F = self.filters
-        # !!!!! padding not implemented
-        self.i_val = inputs
-        # print (self.output_shape)
-        self.z_val = np.zeros(shape=self.output_shape)
-        # print(self.z_val.shape)
-        # quit()
-        conv(self.z_val, H, W, F, C, KH, KW, SH, SW, self.weights, self.biases, inputs)
-        #     ow += 1
-        # oh += 1
+    #     # plt.imshow(inputs.reshape(28, 28), cmap=plt.get_cmap('gray'))
+    #     # plt.show()
+    #     # print(inputs)
+    #     # print(inputs.shape)
+    #     # print(len(inputs.shape))
+    #     # quit()
+    #     H, W, C = inputs.shape
+    #     SH, SW = self.strides
+    #     KH, KW = self.kernel_size
+    #     F = self.filters
+    #     # !!!!! padding not implemented
+    #     self.i_val = inputs
+    #     # print (self.output_shape)
+    #     self.z_val = np.zeros(shape=self.output_shape)
+    #     # print(self.z_val.shape)
+    #     # quit()
+    #     conv(self.z_val, H, W, F, C, KH, KW, SH, SW, self.weights, self.biases, inputs)
+    #     #     ow += 1
+    #     # oh += 1
         
-        # print(np.sum(self.z_val.T[5]))
-        # plt.imshow(self.z_val.T[25].T, cmap=plt.get_cmap('gray'))
-        # plt.show()
-        # self.z_val = np.matmul(inputs, self.weights) + self.biases
-        self.a_val = self.activation(self.z_val)
-        return self.a_val
+    #     # print(np.sum(self.z_val.T[5]))
+    #     # plt.imshow(self.z_val.T[25].T, cmap=plt.get_cmap('gray'))
+    #     # plt.show()
+    #     # self.z_val = np.matmul(inputs, self.weights) + self.biases
+    #     self.a_val = self.activation(self.z_val)
+    #     return self.a_val
 
     def backward_pass(self, inputs):
         # print('dl shape =', inputs.shape)

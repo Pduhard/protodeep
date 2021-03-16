@@ -105,7 +105,7 @@ class MaxPool2D(Layer):
         # return self.units
 
     def forward_pass(self, inputs):
-        print(inputs.shape)
+        # print(inputs.shape)
         # print(len(inputs.shape))
         # quit()
         self.i_val = inputs

@@ -23,7 +23,7 @@ def parse_csv(file_name):
 
 def parse_mnist_csv(file_name):
     fd = open(file_name, "r")
-    lines = fd.read().split()[:1000]
+    lines = fd.read().split()[:10000]
     _ = lines.pop(0)
     # print(header)
     # print(len(header.split(",")))

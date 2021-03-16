@@ -196,7 +196,7 @@ if __name__ == "__main__":
     plt.show()
 
     for i in range(100):
-        print(np.argmax(model.predict(dataset.test_features[i])), dataset.test_targets[i])
+        print(np.argmax(model.predict(dataset.test_features[i:i+1])), dataset.test_targets[i:i+1])
         plt.imshow(dataset.test_features[i], cmap='gray')
         plt.show()
     # print("val_loss", val_loss)
