@@ -45,6 +45,7 @@ if __name__ == "__main__":
     model = Model()
     model.add(Dense(64, activation="relu"))
     model.add(Dense(32, activation="relu"))
+    # model.add(Dense(32, activation="linear"))
     model.add(Dense(2, activation="softmax"))
     # model.add(64, activation="relu")
     # model.add(32, activation="relu")
@@ -61,7 +62,7 @@ if __name__ == "__main__":
         epochs=500,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=6)]
+        callbacks=[EarlyStopping(monitor="val_loss", patience=10)]
     )
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
