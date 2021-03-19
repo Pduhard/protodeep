@@ -44,7 +44,7 @@ def maxpool_derivative(z_index, inputs, dx, N, H, W, F):
                     dh, dw, df = z_index[n, h, w, f]
                     # print(index)
                     # print(inputs[h, w, f])
-                    dx[dh, dw, df] += inputs[n, h, w, f]
+                    dx[n, dh, dw, df] += inputs[n, h, w, f]
 
 @class_timer
 class MaxPool2D(Layer):

@@ -11,8 +11,7 @@ from Protodeep.utils.parse import parse_activation, parse_initializer
 from Protodeep.utils.debug import class_timer
 
 
-@class_timer
-@njit
+@njit(fastmath=True)
 def conv(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, biases, inputs):
     for n in range(N):
         for h in range(0, H - KH, SH):
@@ -25,8 +24,7 @@ def conv(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, biases, inputs):
                                 z_val[n, h // SH, w // SW, f] += inputs[n, h + kh, w + kw, c] * weights[kh, kw, c, f]
                     z_val[n, h // SH, w // SW, f] += biases[f]
 
-@class_timer
-@njit
+@njit(fastmath=True)
 def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
     for n in range(N):
         for h in range(0, H):
@@ -40,8 +38,7 @@ def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
                                 w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, c]
 
 
-@class_timer
-@njit
+@njit(fastmath=True)
 def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
     for n in range(N):
         for h in range(0, H - KH):
@@ -54,8 +51,7 @@ def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
                             for c in range(C):
                                 x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, c] * weights[tw, th, c, f]  # 180 rotated
 
-@class_timer
-@njit
+@njit(fastmath=True)
 def dilate(arr, SH, SW):
     N, H, W, C = arr.shape
     dilated = np.zeros((N, (H - 1) * (SH - 1) + H, (W - 1) * (SW - 1) + W, C))
@@ -281,6 +277,9 @@ class Conv2D(Layer):
         
         # convolution of i_val by a_dp
         conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
+
+        self.w_grad /= N
+        self.b_grad /= N
         # print(self.w_grad.shape)
         # print(self.i_val.shape)
         # print(a_dp.shape)

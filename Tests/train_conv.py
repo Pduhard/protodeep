@@ -140,6 +140,7 @@ if __name__ == "__main__":
     conv2 = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), activation='relu')(maxpool1)
     maxpool2 = MaxPool2D(pool_size=(2, 2))(conv2)
     flatten = Flatten()(maxpool2)
+    # flatten = Flatten()(conv1)
     d1 = Dense(64, activation="relu")(flatten)
     d2 = Dense(32, activation="relu")(d1)
     output = Dense(10, activation="softmax")(d2)
@@ -173,10 +174,10 @@ if __name__ == "__main__":
     history = model.fit(
         features=dataset.features,
         targets=dataset.targets,
-        epochs=100,
+        epochs=1,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=3)]
+        callbacks=[EarlyStopping(monitor="val_loss", patience=2)]
     )
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
 
-    for i in range(100):
+    for i in range(10):
         print(np.argmax(model.predict(dataset.test_features[i:i+1])), dataset.test_targets[i:i+1])
         plt.imshow(dataset.test_features[i], cmap='gray')
         plt.show()
