@@ -1,6 +1,6 @@
 import numpy as np
 try:
-    from numba import njit
+    from numba import njit, prange
 except ImportError:
     def njit(func):
         return func
@@ -11,9 +11,10 @@ from Protodeep.utils.parse import parse_activation, parse_initializer
 from Protodeep.utils.debug import class_timer
 
 
-@njit(fastmath=True)
+@class_timer
+@njit(parallel=True, fastmath=True)
 def conv(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, biases, inputs):
-    for n in range(N):
+    for n in prange(N):
         for h in range(0, H - KH, SH):
             for w in range(0, W - KW, SW):
                 for f in range(F):
@@ -24,23 +25,37 @@ def conv(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, biases, inputs):
                                 z_val[n, h // SH, w // SW, f] += inputs[n, h + kh, w + kw, c] * weights[kh, kw, c, f]
                     z_val[n, h // SH, w // SW, f] += biases[f]
 
-@njit(fastmath=True)
+# @class_timer
+# # @njit(parallel=True, fastmath=True)
+# def old_conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
+#     for n in prange(N):
+#         for h in range(0, H):
+#             for w in range(0, W):
+#                 for f in range(F):
+#                     for kh in range(KH):
+#                         for kw in range(KW):
+#                             for c in range(C):
+#                                 b_grad[c] += a_dp[n, kh, kw, c]
+#                                 w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, c]
+
+
+@class_timer
+@njit(parallel=True, fastmath=True)
 def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
-    for n in range(N):
+    for n in prange(N):
         for h in range(0, H):
             for w in range(0, W):
-                for f in range(F):
+                for c in range(C):
                     for kh in range(KH):
                         for kw in range(KW):
-                            for c in range(C):
-                                b_grad[c] += a_dp[n, kh, kw, c]
-                                # w_grad[h, kh, ]
-                                w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, c]
+                            for f in range(F):
+                                b_grad[f] += a_dp[n, kh, kw, f]
+                                w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f]
 
-
-@njit(fastmath=True)
+@class_timer
+@njit(parallel=True, fastmath=True)
 def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
-    for n in range(N):
+    for n in prange(N):
         for h in range(0, H - KH):
             for w in range(0, W - KW):
                 for f in range(F):
@@ -49,13 +64,16 @@ def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
                         for kw in range(KW):
                             tw = KW - kw - 1
                             for c in range(C):
-                                x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, c] * weights[tw, th, c, f]  # 180 rotated
+                                x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, f] * weights[tw, th, c, f]  # 180 rotated
+                                # old version :
+                                # x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, c] * weights[tw, th, c, f]  # 180 rotated
 
-@njit(fastmath=True)
+@class_timer
+@njit(parallel=True, fastmath=True)
 def dilate(arr, SH, SW):
     N, H, W, C = arr.shape
     dilated = np.zeros((N, (H - 1) * (SH - 1) + H, (W - 1) * (SW - 1) + W, C))
-    for n in range(N):
+    for n in prange(N):
         for h in range(H):
             for w in range(W):
                 for c in range(C):
@@ -199,7 +217,6 @@ class Conv2D(Layer):
         self.i_val = inputs
         # print (self.output_shape)
         self.z_val = np.zeros(shape=output_shape)
-        # print(self.z_val.shape)
         # quit()
         conv(self.z_val, N, H, W, F, C, KH, KW, SH, SW, self.weights, self.biases, inputs)
         #     ow += 1
@@ -266,8 +283,8 @@ class Conv2D(Layer):
         # quit()
         # z_dp = np.zeros(shape=self.weights.shape)
         # w_grad = np.zeros(shape=self.weights.shape)
-        b_grad = np.zeros(shape=self.biases.shape)
-        x_grad = np.zeros(shape=self.i_val.shape)
+        # b_grad = np.zeros(shape=self.biases.shape)
+        self.dloss = np.zeros(shape=self.i_val.shape)
         # print('a shape =', a_dp.shape)
         # print('x shape =', x_grad.shape)
 
@@ -276,6 +293,7 @@ class Conv2D(Layer):
         N, KH, KW, _ = a_dp.shape
         
         # convolution of i_val by a_dp
+        # print(self.w_grad.shape, N, H, W, F, C, KH, KW, a_dp.shape, self.b_grad.shape, self.i_val.shape)
         conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
 
         self.w_grad /= N
@@ -293,32 +311,18 @@ class Conv2D(Layer):
         # z_dp = inputs * a_dp
 
         # print(a_dp.shape)
-        h_pad = (x_grad.shape[0] - a_dp.shape[0])
-        w_pad = (x_grad.shape[1] - a_dp.shape[1])
+        h_pad = (self.dloss.shape[0] - a_dp.shape[0])
+        w_pad = (self.dloss.shape[1] - a_dp.shape[1])
         padding = (
                 (0, 0),
                 (h_pad, h_pad),
                 (w_pad, w_pad),
                 (0, 0)
         )
-        # print(padding)
         pad_a_dp = np.pad(a_dp, padding, 'constant')
-        # print('-----------')
-        # print(x_grad.shape)
-        # print(a_dp.shape)
-        # print(pad_a_dp.shape)
-        # print(self.weights.shape)
 
         N, H, W, _ = pad_a_dp.shape
-        # sh, sw = self.strides
         KH, KW = self.kernel_size
-        # _, _, C, F = self.weights.shape
-        # print(x_grad.shape, H, W, F, C, KH, KW*, pad_a_dp.shape, self.weights.shape)
-        conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, self.weights)
+        conv_xgrad(self.dloss, N, H, W, F, C, KH, KW, pad_a_dp, self.weights)
 
-        # self.weights
-        # print(x_grad.shape)
-        # quit()
-        self.dloss = x_grad
         return self.dloss
-        # return np.matmul(self.weights, z_dp)

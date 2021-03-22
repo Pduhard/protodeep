@@ -1,6 +1,6 @@
 import numpy as np
 try:
-    from numba import njit
+    from numba import njit, prange
 except ImportError:
     def njit(func):
         return func
@@ -11,7 +11,7 @@ from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
 
 
-@njit
+@njit()
 def maxpool(z_val, z_index, inputs, N, H, PH, W, PW, SH, SW, F):
     for n in range(N):
         oh = 0
@@ -35,7 +35,7 @@ def maxpool(z_val, z_index, inputs, N, H, PH, W, PW, SH, SW, F):
             oh += 1
 
 
-@njit
+@njit()
 def maxpool_derivative(z_index, inputs, dx, N, H, W, F):
     for n in range(N):
         for h in range(H):
