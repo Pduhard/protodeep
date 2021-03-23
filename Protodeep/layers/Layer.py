@@ -23,6 +23,9 @@ class Layer:
     def compile(self, input_shape):
         pass
 
+    def init_gradients(self, batch_size):
+        pass
+
     def reset_gradients(self):
         pass
 
@@ -30,11 +33,13 @@ class Layer:
         return inputs
 
     def backward_pass(self, inputs):
-        return inputs
+        return [], None
 
-    # def get_weights(self):
-    #     return None
+    def get_trainable_weights(self):
+        return []
 
+    def get_gradients(self):
+        return []
     # def set_weights(self, weights):
     #     return None
 

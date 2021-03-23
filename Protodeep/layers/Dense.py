@@ -34,9 +34,17 @@ from Protodeep.layers.Layer import Layer
 #         return Relu()  # !! linear
 
 # @njit
-def dense_preactiv(inputs, weights, biases):
-    return np.dot(inputs, weights) + biases
+# def dense_preactiv(inputs, weights, biases):
+#     return np.dot(inputs, weights) + biases
 
+# @njit
+# def backward(w_grad, b_grad, inputs, a_dp, i_val, weights, batch_size):
+#     w_grad.fill(0)
+#     b_grad.fill(0)
+#     z_dp = (inputs * a_dp).T
+#     w_grad += np.matmul(z_dp, i_val).T / batch_size
+#     b_grad += np.mean(z_dp, axis=-1)
+#     return np.matmul(weights, z_dp).T
 
 @class_timer
 class Dense(Layer):
@@ -99,41 +107,68 @@ class Dense(Layer):
             input_shape = input_shape[-1]
         weight_shape = (input_shape, self.units)
         self.weights = self.kernel_initializer(weight_shape)
-        self.w_grad = np.zeros(weight_shape)
+        self.w_grad = np.empty(weight_shape)
         self.biases = self.bias_initializer(self.units)
-        self.b_grad = np.zeros(self.units)
+        self.b_grad = np.empty(self.units)
+        # self.dloss = np.empty()
+        
 
         # print(self.weights.shape)
         # print(self.biases.shape)
         # print("------------")
         # return self.units
 
+    def init_gradients(self, batch_size):
+        self.w_grad = np.empty(self.weights.shape)
+        self.b_grad = np.empty(self.biases.shape)
+        self.dloss = np.empty((batch_size, self.input_connectors.shape))
+        print('dlosss', self.dloss.shape)
+        # self.w_grad.fill(0)
+        # self.b_grad.fill(0)
+        # self.dloss.fill(0)
+    
     def reset_gradients(self):
         self.w_grad.fill(0)
         self.b_grad.fill(0)
+        self.dloss.fill(0)
 
     def forward_pass(self, inputs):
         # print(inputs.shape)
         # quit()
         self.i_val = inputs
-        self.z_val = dense_preactiv(inputs, self.weights, self.biases)
+        self.z_val = np.dot(inputs, self.weights) + self.biases
         self.a_val = self.activation(self.z_val)
         # print(self.a_val)
         return self.a_val
 
     def backward_pass(self, inputs):
+        """
+            inputs: derivative of loss with respect to output of this layer
+
+            outputs:
+                list of gradients (same order as get_trainable_weights),
+                and derivative of loss with respect to input of this layer
+        """
+        self.w_grad.fill(0)
+        self.b_grad.fill(0)
+        # self.dloss.fill(0)
         a_dp = self.activation.derivative(self.z_val)
-        z_dp = inputs * a_dp
-        dloss = []
-        for i in range(inputs.shape[0]):
-            self.w_grad += np.outer(z_dp[i], self.i_val[i]).T
-            self.b_grad += z_dp[i]
-            dloss.append(np.matmul(self.weights, z_dp[i]))
-            # self.dloss = np.matmul(self.weights, z_dp.T).T
-        self.w_grad /= inputs.shape[0]
-        self.b_grad /= inputs.shape[0]
-        self.dloss = np.array(dloss)
-        return self.dloss
+        z_dp = (inputs * a_dp).T
+
+        self.w_grad += np.matmul(z_dp, self.i_val).T / inputs.shape[0]
+        self.b_grad += np.mean(z_dp, axis=-1)
+        # for i in range(inputs.shape[0]):
+            # self.self.w_grad += np.outer(z_dp[i], self.i_val[i]).T
+            # self.self.b_grad += z_dp[i]
+            # dloss.append(np.matmul(self.weights, z_dp[i]))
+            # self.dloss = np.matmul(self.weights, z_dp).T
+        # self.self.w_grad /= inputs.shape[0]
+        # self.self.b_grad /= inputs.shape[0]
+        self.dloss = np.matmul(self.weights, z_dp).T
+        # self.dloss = np.array(dloss)
+        # print(self.dloss.shape)
+        # quit()
+        return [self.w_grad, self.b_grad], self.dloss
         
 
     # def backward_pass(self, inputs):
@@ -161,9 +196,13 @@ class Dense(Layer):
     #     # print(self.i_val.shape)
     #     return self.dloss
 
-    def get_weights(self):
+    def get_trainable_weights(self):
         return [self.weights, self.biases]
 
+
+    def get_gradients(self):
+        return [self.w_grad, self.b_grad]
+    
     def set_weights(self, weights):
         if len(weights) != 2:
             print('chelouuuu set weights dans dense')

@@ -134,10 +134,10 @@ if __name__ == "__main__":
     # s = Dttf()
     i = Input((28, 28, 1))()
     # with Conv2D(filters=2, kernel_size=(3, 3), activation='relu') as a 
-    a = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu')
+    a = Conv2D(filters=4, kernel_size=(2, 2), strides=(1, 1), activation='relu')
     conv1 = a(i)
     maxpool1 = MaxPool2D(pool_size=(2, 2))(conv1)
-    conv2 = Conv2D(filters=16, kernel_size=(2, 2), strides=(1, 1), activation='relu')(maxpool1)
+    conv2 = Conv2D(filters=8, kernel_size=(2, 2), strides=(1, 1), activation='relu')(maxpool1)
     maxpool2 = MaxPool2D(pool_size=(2, 2))(conv2)
     flatten = Flatten()(maxpool2)
     # flatten = Flatten()(conv1)

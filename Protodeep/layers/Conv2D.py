@@ -51,6 +51,8 @@ def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
                             for f in range(F):
                                 b_grad[f] += a_dp[n, kh, kw, f]
                                 w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f]
+    w_grad /= N
+    b_grad /= N
 
 @class_timer
 @njit(parallel=True, fastmath=True)
@@ -183,9 +185,11 @@ class Conv2D(Layer):
             self.filters,
         )
 
+
     def reset_gradients(self):
         self.w_grad.fill(0)
         self.b_grad.fill(0)
+        # self.dloss.fill(0)
 
 
     def forward_pass(self, inputs):
@@ -288,6 +292,9 @@ class Conv2D(Layer):
         # print('a shape =', a_dp.shape)
         # print('x shape =', x_grad.shape)
 
+        self.w_grad.fill(0)
+        self.b_grad.fill(0)
+
         H, W, C, F = self.weights.shape
         SH, SW = self.strides
         N, KH, KW, _ = a_dp.shape
@@ -296,8 +303,7 @@ class Conv2D(Layer):
         # print(self.w_grad.shape, N, H, W, F, C, KH, KW, a_dp.shape, self.b_grad.shape, self.i_val.shape)
         conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
 
-        self.w_grad /= N
-        self.b_grad /= N
+        
         # print(self.w_grad.shape)
         # print(self.i_val.shape)
         # print(a_dp.shape)
@@ -325,4 +331,11 @@ class Conv2D(Layer):
         KH, KW = self.kernel_size
         conv_xgrad(self.dloss, N, H, W, F, C, KH, KW, pad_a_dp, self.weights)
 
-        return self.dloss
+        return [self.w_grad, self.b_grad], self.dloss
+
+
+    def get_trainable_weights(self):
+        return [self.weights, self.biases]
+
+    def get_gradients(self):
+        return [self.w_grad, self.b_grad]

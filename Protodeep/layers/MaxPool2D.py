@@ -11,7 +11,7 @@ from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
 
 
-@njit()
+@njit(fastmath=True)
 def maxpool(z_val, z_index, inputs, N, H, PH, W, PW, SH, SW, F):
     for n in range(N):
         oh = 0
@@ -35,9 +35,9 @@ def maxpool(z_val, z_index, inputs, N, H, PH, W, PW, SH, SW, F):
             oh += 1
 
 
-@njit()
+@njit(parallel=True, fastmath=True)
 def maxpool_derivative(z_index, inputs, dx, N, H, W, F):
-    for n in range(N):
+    for n in prange(N):
         for h in range(H):
             for w in range(W):
                 for f in range(F):
@@ -177,7 +177,7 @@ class MaxPool2D(Layer):
         # print(dx.shape)
         # quit()
         self.dloss = dx
-        return self.dloss
+        return [], self.dloss
         # a_dp = self.activation.derivative(self.z_val)
         # z_dp = inputs * a_dp
 

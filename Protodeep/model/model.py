@@ -51,7 +51,9 @@ class Model:
                     inputs += next_l.dloss
             # print(inputs.shape)
             # quit()
-            layer.backward_pass(inputs)
+            grads, _ = layer.backward_pass(inputs)
+            # print(len(grads))
+            self.gradients.extend(grads)
 
     def predict(self, feature):
         if not isinstance(feature, list):
@@ -130,6 +132,8 @@ class Model:
             self.test_size = len(validation_data[0][0])
         else:
             self.test_size = 0
+        # for l in self.flatten_graph:
+        #     l.init_gradients(batch_size)
         if callbacks is not None:
             for c in callbacks:
                 c.on_fit_start()
@@ -154,7 +158,8 @@ class Model:
             # quit()
             remaining_features = self.train_size
             for s in range(bacth_nb):
-                self.reset_gradients()
+                # self.reset_gradients()
+                self.gradients = []
                 if remaining_features < batch_size:
                     mini_batch_size = remaining_features
                 else:

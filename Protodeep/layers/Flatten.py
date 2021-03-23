@@ -61,7 +61,7 @@ class Flatten(Layer):
 
     def backward_pass(self, inputs):
         self.dloss = inputs.reshape(self.input_shape)
-        return self.dloss
+        return [], self.dloss
         # a_dp = self.activation.derivative(self.z_val)
         # z_dp = inputs * a_dp
 

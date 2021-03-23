@@ -71,13 +71,15 @@ def build_graph(self, inputs, outputs):
 
 
 def build(self):
-    for layer in self.flatten_graph:
-        if layer.trainable is True:
-            self.weights.append(layer.weights)
-            self.gradients.append(layer.w_grad)
-            if layer.use_bias is True:
-                self.weights.append(layer.biases)
-                self.gradients.append(layer.b_grad)
+    for layer in self.flatten_graph[::-1]:
+        self.weights.extend(layer.get_trainable_weights())
+        # self.gradients.extend(layer.get_gradients())
+        # if layer.trainable is True:
+        #     self.weights.append(layer.weights)
+        #     self.gradients.append(layer.w_grad)
+        #     if layer.use_bias is True:
+        #         self.weights.append(layer.biases)
+        #         self.gradients.append(layer.b_grad)
 
 
 def compile(self, features_shape, loss="BinaryCrossentropy",
