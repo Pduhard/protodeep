@@ -9,6 +9,7 @@ import sys
 # import numpy as np
 import matplotlib.pyplot as plt
 from Protodeep.callbacks.EarlyStopping import EarlyStopping
+from Protodeep.optimizers.SGD import SGD
 # from ..dataset_tf import Dataset as Dttf
 
 
@@ -154,7 +155,8 @@ if __name__ == "__main__":
     # model.add(64, activation="relu")
     # model.add(32, activation="relu")
     # model.add(2, activation="softmax")
-    model.compile((28, 28, 1), metrics=["accuracy"], optimizer="Adam")
+    # model.compile((28, 28, 1), metrics=["accuracy"], optimizer=SGD(momentum=0.9))
+    model.compile((28, 28, 1), metrics=["accuracy"], optimizer='Adam')
     
     model.summary()
     from Protodeep.layers.Layer import Layer
@@ -177,7 +179,7 @@ if __name__ == "__main__":
         epochs=100,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=2)]
+        callbacks=[EarlyStopping(monitor="val_loss", patience=100)]
     )
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)

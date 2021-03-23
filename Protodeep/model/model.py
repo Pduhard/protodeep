@@ -49,8 +49,6 @@ class Model:
                     inputs = np.array(next_l.dloss)
                 else:
                     inputs += next_l.dloss
-            # print(inputs.shape)
-            # quit()
             grads, _ = layer.backward_pass(inputs)
             # print(len(grads))
             self.gradients.extend(grads)
