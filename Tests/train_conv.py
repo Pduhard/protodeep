@@ -179,7 +179,7 @@ if __name__ == "__main__":
         epochs=100,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=100)]
+        callbacks=[EarlyStopping(monitor="val_loss", patience=3)]
     )
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)

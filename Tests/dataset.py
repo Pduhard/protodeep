@@ -4,6 +4,37 @@ import matplotlib.pyplot as plt
 
 from fstat import Fstat
 
+def time_series_split(features, targets, ssize=10):
+    wfeatures = []
+    wtargets = []
+
+
+    for i in range(len(targets) - ssize):
+        wfeatures.append(features[i:i+ssize])
+        wtargets.append(targets[i+ssize][0])
+    # for d in dataset[:10]:
+    #     print(d)
+    wfeatures = np.array(wfeatures).astype(np.float32)
+    wtargets = np.array(wtargets).astype(np.float32)
+    return wfeatures, wtargets
+
+
+def parse_btc(file_name='BTCUSD_day.csv'):
+    with open(file_name, 'r') as infile:
+        lines = [line for line in infile.read().split('\n') if len(line) > 1]
+        features = np.empty((len(lines), 4))
+        targets = np.empty((len(lines), 1))
+        lines.pop(0)
+        for i, line in enumerate(lines):
+            sline = line.split(",")[3:-1]
+            # print(sline[-1])
+            # target = sline.pop(0)
+            targets[i] = float(sline[-1])
+            features[i] = np.array(sline, dtype=float)
+        # print(features.shape)
+        # quit()
+    return time_series_split(features, targets, ssize=10)
+
 
 def parse_csv(file_name):
     fd = open(file_name, "r")
@@ -86,6 +117,8 @@ class Dataset:
             test_split = 0
         if 'mnist' in file_name:
             self.features, self.targets = parse_mnist_csv(file_name)
+        elif 'BTC' in file_name:
+            self.features, self.targets = parse_btc()
         else:
             self.features, self.targets = parse_csv(file_name)
             self.features_stat = [Fstat(feature) for feature in self.features.T]

@@ -227,10 +227,10 @@ class Model:
         total_param = 0
         for layer in self.flatten_graph:
             param = 0
-            if layer.trainable is True:
-                param += np.prod(layer.weights.shape)
-                if layer.use_bias is True:
-                    param += np.prod(layer.biases.shape)
+            param += np.sum(
+                [np.prod(w.shape) for w in layer.get_trainable_weights()],
+                dtype=int
+            )
             if layer is self.flatten_graph[-1]:
                 end_str = '=' * rowsize
             else:
