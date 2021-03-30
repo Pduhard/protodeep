@@ -13,6 +13,8 @@ from Protodeep.callbacks.EarlyStopping import EarlyStopping
 from Protodeep.optimizers.SGD import SGD
 # from ..dataset_tf import Dataset as Dttf
 
+from scalers.StandardScaler import StandardScaler
+from Preprocessing.Split import Split
 
 def parse_option_value(opt, dflt):
     if opt in sys.argv:
@@ -57,14 +59,32 @@ if __name__ == "__main__":
     options = parse_options()
     dataset = Dataset(options['csv_name'], 0.2)
 
-    print(dataset.features.shape, dataset.targets.shape)
+    scaler = StandardScaler().fit(dataset.features)
+    dataset.features = scaler.transform(dataset.features)
+
+    trg_scaler = StandardScaler().fit(dataset.targets)
+    dataset.targets = trg_scaler.transform(dataset.targets)
+
+    features, targets = Split.time_series_split(dataset.features, dataset.targets, ssize=10)
+
+    print(features[0].tolist())
+    print(targets[0].tolist())
+
+    ((x_train, y_train), (x_test, y_test)) = Split.train_test_split(
+        features, targets)
+    # print(features.shape, dataset.targets.shape)
     # test(1, 2)
     # s = Dttf()
     i = Input((10, 4))()
     lstm = LSTM(32)(i)
     output = Dense(1)(lstm)
     model = Model(inputs=i, outputs=output)
-    model.compile((10, 4), metrics=["accuracy"], optimizer='Adam')
+    model.compile(
+        (10, 4),
+        metrics=[],
+        optimizer='Adam',
+        loss='mean_squared_error'
+    )
     
     model.summary()
     # from Protodeep.layers.Layer import Layer
@@ -76,28 +96,28 @@ if __name__ == "__main__":
     #     print(layer.output_connectors)
     # quit()
     # quit()
-    # print(dataset.features.shape)
+    # print(features.shape)
     # print(dataset.test_features.shape)
-    # print(dataset.features.shape)
+    # print(features.shape)
     # print(numpy.min(model.weights[0]))
-    print(dataset.features.shape)
+    print(features.shape)
     history = model.fit(
-        features=dataset.features,
-        targets=dataset.targets,
+        features=x_train,
+        targets=y_train,
         epochs=100,
         batch_size=32,
-        validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=3)]
+        validation_data=(x_test, y_test),
+        callbacks=[EarlyStopping(monitor="val_loss", patience=2)]
     )
     model.evaluate(
-        validation_data=(dataset.test_features, dataset.test_targets)
+        validation_data=(x_test, y_test)
     )
-    plt.plot(history['accuracy'])
-    plt.plot(history['val_accuracy'])
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.show()
+    # plt.plot(history['accuracy'])
+    # plt.plot(history['val_accuracy'])
+    # plt.ylabel('accuracy')
+    # plt.xlabel('epoch')
+    # plt.legend(['train', 'validation'], loc='upper left')
+    # plt.show()
 
     plt.plot(history['loss'])
     plt.plot(history['val_loss'])
@@ -105,3 +125,6 @@ if __name__ == "__main__":
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
+
+    for i in range(20):
+        print(model.predict(x_test[i:i+1]), y_test[i:i+1])

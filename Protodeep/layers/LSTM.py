@@ -179,8 +179,8 @@ class LSTM(Layer):
         self.dloss.fill(0)
 
     def forward_pass(self, inputs):
-        print('forward lstm')
-        print(inputs.shape)
+        # print('forward lstm')
+        # print(inputs.shape)
         self.i_val = inputs
         # self.forget_gate.fill(0)
 
@@ -190,40 +190,54 @@ class LSTM(Layer):
         self.output_gate = np.zeros(shape=(batch_size, timestep + 1, self.units))
         self.candidate_gate = np.zeros(shape=(batch_size, timestep + 1, self.units))
 
+        self.z_forget_gate = np.zeros(shape=(batch_size, timestep + 1, self.units))
+        self.z_input_gate = np.zeros(shape=(batch_size, timestep + 1, self.units))
+        self.z_output_gate = np.zeros(shape=(batch_size, timestep + 1, self.units))
+        self.z_candidate_gate = np.zeros(shape=(batch_size, timestep + 1, self.units))
+
         self.hidden_state = np.zeros(shape=(batch_size, timestep + 1, self.units))
         self.cell_state = np.zeros(shape=(batch_size, timestep + 1, self.units))
         self.a_val = np.zeros(shape=(batch_size, timestep + 1, self.units))
         for b, inpt in enumerate(inputs):
             i = 1
             for x in inpt:
-                print(np.sum(np.matmul(x, self.forget_weight))
-                    ,np.sum(np.matmul(self.hidden_state[b, i - 1], self.forget_hidden_weight)))
-                self.forget_gate[b, i] = self.recurrent_activation(
-                    np.matmul(x, self.forget_weight)
-                    + np.matmul(self.hidden_state[b, i - 1], self.forget_hidden_weight)
-                    + self.forget_biase
-                )
-                self.input_gate[b, i] = self.recurrent_activation(
-                    np.matmul(x, self.input_weight)
-                    + np.matmul(self.hidden_state[b, i - 1], self.input_hidden_weight)
-                    + self.input_biase
-                )
-                self.output_gate[b, i] = self.recurrent_activation(
-                    np.matmul(x, self.output_weight)
-                    + np.matmul(self.hidden_state[b, i - 1], self.output_hidden_weight)
-                    + self.output_biase
-                )
-                self.candidate_gate[b, i] = self.activation(
-                    np.matmul(x, self.candidate_weight)
-                    + np.matmul(self.hidden_state[b, i - 1], self.candidate_hidden_weight)
-                    + self.candidate_biase
-                )
+                zfg = np.matmul(x, self.forget_weight) + np.matmul(self.hidden_state[b, i - 1], self.forget_hidden_weight) + self.forget_biase
+                fg = self.recurrent_activation(zfg)
+                # print(np.sum(np.matmul(x, self.forget_weight))
+                #     ,np.sum(np.matmul(self.hidden_state[b, i - 1], self.forget_hidden_weight)))
+                zig = np.matmul(x, self.input_weight) + np.matmul(self.hidden_state[b, i - 1], self.input_hidden_weight) + self.input_biase
+                ig = self.recurrent_activation(zig)
+                # print(f'forget gate : {self.forget_gate[b, i]}')
+                zog = np.matmul(x, self.output_weight) + np.matmul(self.hidden_state[b, i - 1], self.output_hidden_weight) + self.output_biase
+                og = self.recurrent_activation(zog)
 
-                self.cell_state[b, i] = self.cell_state[b, i - 1] * self.forget_gate[b, i]
-                + self.input_gate[b, i] * self.candidate_gate[b, i]
+                zcg = np.matmul(x, self.candidate_weight) + np.matmul(self.hidden_state[b, i - 1], self.candidate_hidden_weight) + self.candidate_biase 
+                cg = self.activation(zcg)
+                # print(f'input gate : {self.input_gate[b, i]}')
+                # print(f'candidate gate : {self.candidate_gate[b, i]}')
+                cs = self.cell_state[b, i - 1] * fg + ig * cg
+                hs = self.activation(cs) * og
+                out_val = hs
 
-                self.hidden_state[b, i] = self.activation(self.cell_state[b, i]) * self.output_gate[b, i]
-                self.a_val[b, i] += self.activation(self.cell_state[b, i]) * self.output_gate[b, i]
+                self.forget_gate[b, i] += fg
+                self.input_gate[b, i] += ig
+                self.output_gate[b, i] += og
+                self.candidate_gate[b, i] += cg
+                
+                self.z_forget_gate[b, i] += zfg
+                self.z_input_gate[b, i] += zig
+                self.z_output_gate[b, i] += zog
+                self.z_candidate_gate[b, i] += zcg
+
+                self.cell_state[b, i] += cs
+                self.hidden_state[b, i] += hs
+                # print(self.cell_state[b, i - 1] * self.forget_gate[b, i])
+                # print(self.input_gate[b, i] * self.candidate_gate[b, i])
+                # print(f'cell state : {self.cell_state[b, i]}')
+                # print(f'hidden state : {self.hidden_state[b, i]}')
+
+                self.a_val[b, i] += out_val
+                # print(f'output value : {self.a_val[b, i]}')
                 i += 1
                 # np.matmul(x, self.forget_weight, out=self.forget_gate[b, i])
                 # print(np.matmul(x, self.forget_weight) == self.forget_gate[b, i])
@@ -232,8 +246,9 @@ class LSTM(Layer):
         # self.i_val = inputs
         # self.z_val = np.dot(inputs, self.weights) + self.biases
         # self.a_val = self.activation(self.z_val)
-        print(self.a_val[1])
-        quit()
+        # print(np.sum(self.a_val))
+        # quit()
+        self.a_val = self.a_val[:, -1, :]
         return self.a_val
 
     def backward_pass(self, inputs):
@@ -244,6 +259,69 @@ class LSTM(Layer):
                 list of gradients (same order as get_trainable_weights),
                 and derivative of loss with respect to input of this layer
         """
+        batch_size, timesteps, _ = self.i_val.shape
+        self.dloss = np.zeros(shape=(self.i_val.shape))
+        self.forget_w_grad.fill(0)
+        self.input_w_grad.fill(0)
+        self.output_w_grad.fill(0)
+        self.candidate_w_grad.fill(0)
+
+        self.forget_hidden_w_grad.fill(0)
+        self.input_hidden_w_grad.fill(0)
+        self.output_hidden_w_grad.fill(0)
+        self.candidate_hidden_w_grad.fill(0)
+
+        self.forget_b_grad.fill(0)
+        self.input_b_grad.fill(0)
+        self.output_b_grad.fill(0)
+        self.candidate_b_grad.fill(0)
+        # print(inputs.shape)
+        for b, inpt in enumerate(inputs):
+            # print(inpt.shape)
+            dly = inpt
+            dlcsnext = 0
+
+            for i in range(timesteps, 0, -1):
+                dlcs = dly * self.output_gate[b, i] * self.activation.derivative(self.cell_state[b, i])
+
+                # dl_z_forget = dlcs * self.cell_state[b, i - 1] * self.recurrent_activation.derivative(self.z_forget_gate[b, i])
+                dl_z_forget = self.cell_state[b, i - 1] * dlcsnext + dlcs * self.cell_state[b, i - 1] * self.recurrent_activation.derivative(self.z_forget_gate[b, i])
+                # print(f'dl_z_forget: {dl_z_forget.shape}')
+                self.forget_w_grad += np.outer(dl_z_forget, self.i_val[b, i - 1]).T
+                self.forget_hidden_w_grad += np.outer(dl_z_forget, self.hidden_state[b, i - 1]).T
+                self.forget_b_grad += dl_z_forget
+                self.dloss[b, i - 1] += np.matmul(self.forget_weight, dl_z_forget).T
+                newdly = (self.forget_hidden_weight @ dl_z_forget).T
+
+                # dl_z_input = dlcs * self.candidate_gate[b, i] * self.recurrent_activation.derivative(self.z_input_gate[b, i])
+                dl_z_input = self.candidate_gate[b, i] * dlcsnext + dlcs * self.candidate_gate[b, i] * self.recurrent_activation.derivative(self.z_input_gate[b, i])
+                self.input_w_grad += np.outer(dl_z_input, self.i_val[b, i - 1]).T
+                self.input_hidden_w_grad += np.outer(dl_z_input, self.hidden_state[b, i - 1]).T
+                self.input_b_grad += dl_z_input
+                self.dloss[b, i - 1] += (self.input_weight @ dl_z_input).T
+                newdly += (self.input_hidden_weight @ dl_z_input).T
+
+                # dl_z_candidate = dlcs * self.input_gate[b, i] * self.activation.derivative(self.z_candidate_gate[b, i])
+                dl_z_candidate = self.input_gate[b, i] * dlcsnext + dlcs * self.input_gate[b, i] * self.activation.derivative(self.z_candidate_gate[b, i])
+                self.candidate_w_grad += np.outer(dl_z_candidate, self.i_val[b, i - 1]).T
+                self.candidate_hidden_w_grad += np.outer(dl_z_candidate, self.hidden_state[b, i - 1]).T
+                self.candidate_b_grad += dl_z_candidate
+                self.dloss[b, i - 1] += np.matmul(self.candidate_weight, dl_z_candidate).T
+                newdly += np.matmul(self.candidate_hidden_weight, dl_z_candidate).T
+
+                dl_z_output = dly * self.activation(self.cell_state[b, i]) * self.recurrent_activation.derivative(self.z_output_gate[b, i])
+                self.output_w_grad += np.outer(dl_z_output, self.i_val[b, i - 1]).T
+                self.output_hidden_w_grad += np.outer(dl_z_output, self.hidden_state[b, i - 1]).T
+                self.output_b_grad += dl_z_output
+                self.dloss[b, i - 1] += np.matmul(self.output_weight, dl_z_output).T
+                newdly += np.matmul(self.output_hidden_weight, dl_z_output).T
+
+                # print(self.dloss[b, i - 1])
+
+                dly = newdly
+                dlcsnext = dlcsnext * self.forget_gate[b, i] + dlcs * self.forget_gate[b, i]
+                # print('ok')
+                # quit()
         # self.w_grad.fill(0)
         # self.b_grad.fill(0)
         # # self.dloss.fill(0)
@@ -261,9 +339,21 @@ class LSTM(Layer):
         # # self.self.b_grad /= inputs.shape[0]
         # self.dloss = np.matmul(self.weights, z_dp).T
         # # self.dloss = np.array(dloss)
-        print('bckwrd lstm')
-        quit()
-        return [self.w_grad, self.b_grad], self.dloss
+        # print('bckwrd lstm')
+        # quit()
+        self.forget_w_grad /= batch_size
+        self.input_w_grad /= batch_size
+        self.output_w_grad /= batch_size
+        self.candidate_w_grad /= batch_size
+        self.forget_hidden_w_grad /= batch_size
+        self.input_hidden_w_grad /= batch_size
+        self.output_hidden_w_grad /= batch_size
+        self.candidate_hidden_w_grad /= batch_size
+        self.forget_b_grad /= batch_size
+        self.input_b_grad /= batch_size
+        self.output_b_grad /= batch_size
+        self.candidate_b_grad /= batch_size
+        return self.get_gradients(), self.dloss
         
 
     def get_trainable_weights(self):

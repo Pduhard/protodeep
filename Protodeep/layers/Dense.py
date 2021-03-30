@@ -37,14 +37,18 @@ from Protodeep.layers.Layer import Layer
 # def dense_preactiv(inputs, weights, biases):
 #     return np.dot(inputs, weights) + biases
 
+
+# !!! ceci est de la grosse merde jpp too slow
 # @njit
 # def backward(w_grad, b_grad, inputs, a_dp, i_val, weights, batch_size):
 #     w_grad.fill(0)
 #     b_grad.fill(0)
 #     z_dp = (inputs * a_dp).T
-#     w_grad += np.matmul(z_dp, i_val).T / batch_size
-#     b_grad += np.mean(z_dp, axis=-1)
-#     return np.matmul(weights, z_dp).T
+#     w_grad += (z_dp @ i_val).T / batch_size
+#     for i in range(batch_size):
+#         b_grad[i] += z_dp[i]
+#     return (weights @ z_dp).T
+
 
 @class_timer
 class Dense(Layer):
@@ -111,8 +115,6 @@ class Dense(Layer):
         self.biases = self.bias_initializer(self.units)
         self.b_grad = np.empty(self.units)
         # self.dloss = np.empty()
-        
-
         # print(self.weights.shape)
         # print(self.biases.shape)
         # print("------------")
@@ -134,11 +136,12 @@ class Dense(Layer):
 
     def forward_pass(self, inputs):
         # print(inputs.shape)
-        # quit()
+        # print(self.weights.shape)
         self.i_val = inputs
         self.z_val = np.dot(inputs, self.weights) + self.biases
         self.a_val = self.activation(self.z_val)
-        # print(self.a_val)
+        # print(self.a_val.shape)
+        # quit()
         return self.a_val
 
     def backward_pass(self, inputs):
@@ -149,22 +152,21 @@ class Dense(Layer):
                 list of gradients (same order as get_trainable_weights),
                 and derivative of loss with respect to input of this layer
         """
+        # self.dloss = backward(self.w_grad, self.b_grad, inputs, self.activation.derivative(self.z_val), self.i_val, self.weights, inputs.shape[0])
         self.w_grad.fill(0)
         self.b_grad.fill(0)
-        # self.dloss.fill(0)
         a_dp = self.activation.derivative(self.z_val)
         z_dp = (inputs * a_dp).T
 
-        self.w_grad += np.matmul(z_dp, self.i_val).T / inputs.shape[0]
+        self.w_grad += (z_dp @ self.i_val).T / inputs.shape[0]
         self.b_grad += np.mean(z_dp, axis=-1)
         # for i in range(inputs.shape[0]):
             # self.self.w_grad += np.outer(z_dp[i], self.i_val[i]).T
             # self.self.b_grad += z_dp[i]
             # dloss.append(np.matmul(self.weights, z_dp[i]))
             # self.dloss = np.matmul(self.weights, z_dp).T
-        # self.self.w_grad /= inputs.shape[0]
-        # self.self.b_grad /= inputs.shape[0]
-        self.dloss = np.matmul(self.weights, z_dp).T
+
+        self.dloss = (self.weights @ z_dp).T
         # self.dloss = np.array(dloss)
         # print(self.dloss.shape)
         # quit()

@@ -33,7 +33,8 @@ def parse_btc(file_name='BTCUSD_day.csv'):
             features[i] = np.array(sline, dtype=float)
         # print(features.shape)
         # quit()
-    return time_series_split(features, targets, ssize=10)
+    return features, targets[:, np.newaxis]
+    return time_series_split(features, targets[:, np.newaxis], ssize=10)
 
 
 def parse_csv(file_name):
@@ -117,14 +118,14 @@ class Dataset:
             test_split = 0
         if 'mnist' in file_name:
             self.features, self.targets = parse_mnist_csv(file_name)
+            self.split_dataset(test_split)
         elif 'BTC' in file_name:
             self.features, self.targets = parse_btc()
         else:
             self.features, self.targets = parse_csv(file_name)
             self.features_stat = [Fstat(feature) for feature in self.features.T]
             self.standardize()
-
-        self.split_dataset(test_split)
+            self.split_dataset(test_split)
         # plt.imshow(self.features[0], cmap=plt.get_cmap('gray'))
         # plt.show()
         # quit()

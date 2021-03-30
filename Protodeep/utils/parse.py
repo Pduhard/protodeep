@@ -7,6 +7,7 @@ from Protodeep.activations.Relu import Relu
 from Protodeep.activations.Softmax import Softmax
 from Protodeep.activations.Sigmoid import Sigmoid
 from Protodeep.activations.Linear import Linear
+from Protodeep.activations.Tanh import Tanh
 from Protodeep.optimizers.SGD import SGD
 from Protodeep.optimizers.Adagrad import Adagrad
 from Protodeep.optimizers.RMSProp import RMSProp
@@ -14,12 +15,13 @@ from Protodeep.optimizers.Adadelta import Adadelta
 from Protodeep.optimizers.Adam import Adam
 from Protodeep.metrics.Accuracy import Accuracy
 from Protodeep.losses.BinaryCrossentropy import BinaryCrossentropy
+from Protodeep.losses.MeanSquaredError import MeanSquaredError
 
 
 def parse_metrics(metrics):
     res = []
     for metric in metrics:
-        metric = metric.lower()
+        metric = metric.lower().replace('_', '')
         if isinstance(metric, str) is False:
             res.append(metric)
         else:
@@ -30,8 +32,8 @@ def parse_metrics(metrics):
 
 def parse_initializer(initializer):
     if isinstance(initializer, str) is False:
-        return initializer
-    initializer = initializer.lower()
+        return initializer or HeNormal()
+    initializer = initializer.lower().replace('_', '')
     if initializer == "henormal":
         return HeNormal()
     elif initializer == "glorotnormal":
@@ -46,8 +48,8 @@ def parse_initializer(initializer):
 
 def parse_optimizer(optimizer):
     if isinstance(optimizer, str) is False:
-        return optimizer
-    optimizer = optimizer.lower()
+        return optimizer or Adam()
+    optimizer = optimizer.lower().replace('_', '')
     if optimizer == "sgd":
         return SGD()
     elif optimizer == "adagrad":
@@ -64,10 +66,12 @@ def parse_optimizer(optimizer):
 
 def parse_loss(loss):
     if isinstance(loss, str) is False:
-        return loss
-    loss = loss.lower()
-    if loss == "binarycrossentropy" or loss == "binary_crossentropy":
+        return loss or BinaryCrossentropy()
+    loss = loss.lower().replace('_', '')
+    if loss == "binarycrossentropy":
         return BinaryCrossentropy()
+    elif loss == "meansquarederror":
+        return MeanSquaredError()
     else:
         return BinaryCrossentropy()
 
@@ -88,7 +92,7 @@ def parse_loss(loss):
 
 def parse_activation(activation):
     if isinstance(activation, str) is False:
-        return activation
+        return activation or Linear()
     activation = activation.lower()
     if activation == "softmax":
         return Softmax()
@@ -96,6 +100,8 @@ def parse_activation(activation):
         return Sigmoid()
     elif activation == "relu":
         return Relu()
+    elif activation == "tanh":
+        return Tanh()
     elif activation == "linear":
         return Linear()
     else:

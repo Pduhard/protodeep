@@ -173,8 +173,9 @@ class Model:
                 dp_loss = []
                 for p, t in zip(pred, target):
                     # print(p, t)
-                    # print(p[0])
-                    # print(t[0])
+                    # if s == 0:
+                    #     print(p[0])
+                    #     print(t[0])
                     loss += self.loss(p, t)
                     # print(self.loss(p, t))
                     dp_loss.append(self.loss.dr(p, t))
