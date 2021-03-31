@@ -375,31 +375,11 @@ class LSTM(Layer):
                 dly = (self.hwf @ dlzf + self.hwi @ dlzi + self.hwc @ dlzc + self.hwo @ dlzo).T
                 if self.return_sequences and i > 1:
                     dly += inpt[i - 2]
-                # print(self.dloss[b, i - 1])
 
-                # dly = newdly
+                # derivative of loss with respect to implication of cell state in next cell
                 dlcsnext = dlcsnext * self.af[b, i] + dlcs * self.af[b, i]
                 # print('ok')
                 # quit()
-        # self.w_grad.fill(0)
-        # self.b_grad.fill(0)
-        # # self.dloss.fill(0)
-        # a_dp = ad(self.z_val)
-        # z_dp = (inputs * a_dp).T
-
-        # self.w_grad += np.matmul(z_dp, self.i_val).T / inputs.shape[0]
-        # self.b_grad += np.mean(z_dp, axis=-1)
-        # # for i in range(inputs.shape[0]):
-        #     # self.self.w_grad += np.outer(z_dp[i], self.i_val[i]).T
-        #     # self.self.b_grad += z_dp[i]
-        #     # dloss.append(np.matmul(self.weights, z_dp[i]))
-        #     # self.dloss = np.matmul(self.weights, z_dp).T
-        # # self.self.w_grad /= inputs.shape[0]
-        # # self.self.b_grad /= inputs.shape[0]
-        # self.dloss = np.matmul(self.weights, z_dp).T
-        # # self.dloss = np.array(dloss)
-        # print('bckwrd lstm')
-        # quit()
         self.wf_g /= batch_size
         self.wi_g /= batch_size
         self.wo_g /= batch_size
