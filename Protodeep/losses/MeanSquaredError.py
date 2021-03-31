@@ -28,5 +28,4 @@ class MeanSquaredError():
         t = target
         # print(type(p))
         # print(type(target))
-        # care epsilon !! but this avoid divide by zero
-        return (p - t)
+        return (p - t) * 2

@@ -17,9 +17,8 @@ from scalers.StandardScaler import StandardScaler
 from Preprocessing.Split import Split
 
 def parse_option_value(opt, dflt):
-    if opt in sys.argv:
-        if sys.argv.index(opt) + 1 != len(sys.argv):
-            return sys.argv[sys.argv.index(opt) + 1]
+    if opt in sys.argv and sys.argv.index(opt) + 1 != len(sys.argv):
+        return sys.argv[sys.argv.index(opt) + 1]
     return dflt
 
 
@@ -76,8 +75,9 @@ if __name__ == "__main__":
     # test(1, 2)
     # s = Dttf()
     i = Input((10, 4))()
-    lstm = LSTM(32)(i)
-    output = Dense(1)(lstm)
+    lstm = LSTM(32, return_sequences=True)(i)
+    lstm1 = LSTM(32)(lstm)
+    output = Dense(1)(lstm1)
     model = Model(inputs=i, outputs=output)
     model.compile(
         (10, 4),
