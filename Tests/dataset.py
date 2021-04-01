@@ -61,7 +61,7 @@ def parse_mnist_csv(file_name):
     # print(len(header.split(",")))
     # print(len(lines))
     # quit()
-    features = np.empty((len(lines), 28, 28))
+    features = np.empty((len(lines), 28, 28, 1))
     targets = np.zeros((len(lines), 10))
     # print (features.shape)
     # print (targets.shape)
@@ -70,7 +70,7 @@ def parse_mnist_csv(file_name):
         target = int(sline.pop(-1))
         targets[i][target] = 1
         # targets[i] = [1, 0] if target == "M" else [0, 1]
-        features[i] = np.array(sline).reshape((28, 28))
+        features[i] = np.array(sline).reshape((28, 28, 1))
         # print(features[0])
         # print(targets[0])
     # plt.imshow(features[0], cmap=plt.get_cmap('gray'))

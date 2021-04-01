@@ -9,7 +9,7 @@ except ImportError:
 from Protodeep.layers.Layer import Layer
 from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
-
+from Protodeep.utils.error import _shape_error
 
 @class_timer
 @njit(parallel=True, fastmath=True)
@@ -96,7 +96,7 @@ def rotate_180(arr, H, W):
         for j in range(W):
             rotated[i, W-1-j] = arr[H-1-i, j]
     return rotated
-from Protodeep.utils.debug import class_timer
+
 
 @class_timer
 class Conv2D(Layer):
@@ -113,13 +113,11 @@ class Conv2D(Layer):
     i_val = None
     dloss = None
 
-    def __init__(self, filters, kernel_size, strides=(1, 1), padding='valid',
-                 data_format=None, dilation_rate=(1, 1), groups=1,
+    def __init__(self, filters, kernel_size, strides=(1, 1),
                  activation=None, use_bias=True,
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros', kernel_regularizer=None,
-                 bias_regularizer=None, activity_regularizer=None,
-                 kernel_constraint=None, bias_constraint=None):
+                 bias_regularizer=None, activity_regularizer=None):
         name = 'conv2d'
         if self.__class__.total_instance > 0:
             name += '_' + str(self.__class__.total_instance)
@@ -128,10 +126,6 @@ class Conv2D(Layer):
         self.filters = filters
         self.kernel_size = kernel_size
         self.strides = strides
-        self.padding = padding
-        self.data_format = data_format
-        self.dilation_rate = dilation_rate
-        self.groups = groups
         self.activation = parse_activation(activation)
         self.use_bias = use_bias
         self.kernel_initializer = parse_initializer(kernel_initializer)
@@ -139,26 +133,22 @@ class Conv2D(Layer):
         self.kernel_regularizer = parse_regularizer(kernel_regularizer)
         self.bias_regularizer = parse_regularizer(bias_regularizer)
         self.activity_regularizer = parse_regularizer(activity_regularizer)
-        self.kernel_constraint = kernel_constraint
-        self.bias_constraint = bias_constraint
-        # self.output_shape =
 
     def __call__(self, connectors):
         h, w, c = connectors.shape
         kh, kw = self.kernel_size
         sh, sw = self.strides
 
-        weight_shape = (*self.kernel_size, connectors.shape[-1], self.filters)
+        weight_shape = (kh, kw, c, self.filters)
         self.weights = self.kernel_initializer(weight_shape)
-        # self.weights = np.full(weight_shape, 1)
         self.w_grad = np.zeros(weight_shape)
 
-        self.biases = self.bias_initializer(self.filters)
-        self.b_grad = np.zeros(self.filters)
-        print(self.weights.shape)
+        if self.use_bias:
+            self.biases = self.bias_initializer(self.filters)
+            self.b_grad = np.zeros(self.filters)
+        
         self.output_shape = (
-            # None,
-            int((h - kh) / sh + 1),  # need to check what append when not round number
+            int((h - kh) / sh + 1),
             int((w - kw) / sw + 1),
             self.filters,
         )
@@ -168,168 +158,90 @@ class Conv2D(Layer):
         )
         return self.output_connectors
 
-    def compile(self, input_shape):
-        """ input should be a 3d array (H, W, C)
-                ( should add batch size here ? )
-                H = height
-                W = width
-                C = channel
-            weight shape (H, W, C, F)
-                F = filter
-        """
-        weight_shape = (*self.kernel_size, input_shape[-1], self.filters)
-        self.weights = self.kernel_initializer(weight_shape)
-        # self.weights = np.full(weight_shape, 1)
-        self.w_grad = np.zeros(weight_shape)
+    # def compile(self, input_shape):
+    #     print('nopeee')
+    #     quit()
+    #     """ input should be a 3d array (H, W, C)
+    #             ( should add batch size here ? )
+    #             H = height
+    #             W = width
+    #             C = channel
+    #         weight shape (H, W, C, F)
+    #             F = filter
+    #     """
+        
+    #     weight_shape = (*self.kernel_size, input_shape[-1], self.filters)
 
-        self.biases = self.bias_initializer(self.filters)
-        self.b_grad = np.zeros(self.filters)
-
-        h, w, c = input_shape
-        kh, kw = self.kernel_size
-        sh, sw = self.strides
-
-        self.output_shape = (
-            # None,
-            int((h - kh) / sh + 1),  # need to check what append when not round number
-            int((w - kw) / sw + 1),
-            self.filters,
-        )
+    #     self.weights = self.kernel_initializer(weight_shape)
+    #     self.w_grad = np.zeros(weight_shape)
+     
+    #     if self.use_bias:
+    #         self.biases = self.bias_initializer(self.filters)
+    #         self.b_grad = np.zeros(self.filters)
 
 
-    def reset_gradients(self):
-        self.w_grad.fill(0)
-        self.b_grad.fill(0)
+    #     h, w, c = input_shape
+    #     kh, kw = self.kernel_size
+    #     sh, sw = self.strides
+
+    #     self.output_shape = (
+    #         int((h - kh) / sh + 1),
+    #         int((w - kw) / sw + 1),
+    #         self.filters,
+    #     )
+
+
+    # def reset_gradients(self):
+    #     self.w_grad.fill(0)
+    #     self.b_grad.fill(0)
         # self.dloss.fill(0)
 
-
     def forward_pass(self, inputs):
-        """ input should be a 4d array (N, H, W, C) """
+        """
+        input must be a 4d array :
+            ( batch_size, height, width, channel )
+        """
+
+        # if inputs.shape[1:] != self.input_connectors.shape:
+        #     _shape_error(self.input_connectors.shape, inputs.shape[1:])
         
-        # plt.imshow(inputs, cmap=plt.get_cmap('gray'))
-        # plt.show()
-        # print(inputs.shape)
-        if len(inputs.shape) < 4:
-            inputs = inputs[:, :, :, np.newaxis]
-        
-        # plt.imshow(inputs.reshape(28, 28), cmap=plt.get_cmap('gray'))
-        # plt.show()
-        # print(inputs)
-        # print(inputs.shape)
-        # print(len(inputs.shape))
-        # quit()
         N, H, W, C = inputs.shape
         SH, SW = self.strides
         KH, KW = self.kernel_size
         F = self.filters
         output_shape = (
             N,
-            int((H - KH) / SH + 1),  # need to check what append when not round number
+            int((H - KH) / SH + 1),
             int((W - KW) / SW + 1),
             F
         )
-        # !!!!! padding not implemented
         self.i_val = inputs
-        # print (self.output_shape)
         self.z_val = np.zeros(shape=output_shape)
-        # quit()
-        # print(self.z_val.shape, N, H, W, F, C, KH, KW, SH, SW, self.weights.shape, self.biases.shape, inputs.shape)
-        conv(self.z_val, N, H, W, F, C, KH, KW, SH, SW, self.weights, self.biases, inputs)
-        #     ow += 1
-        # oh += 1
-        
-        # print(np.sum(self.z_val.T[5]))
-        # plt.imshow(self.z_val.T[25].T, cmap=plt.get_cmap('gray'))
-        # plt.show()
-        # self.z_val = np.matmul(inputs, self.weights) + self.biases
+        conv(self.z_val, N, H, W, F, C, KH, KW, SH,
+             SW, self.weights, self.biases, inputs)
         self.a_val = self.activation(self.z_val)
-        # print(type(self.a_val))
         return self.a_val
 
-    # def old_forward_pass(self, inputs):
-    #     """ input should be a 3d array (H, W, C) """
-        
-    #     # plt.imshow(inputs, cmap=plt.get_cmap('gray'))
-    #     # plt.show()
-    #     # print(inputs)
-    #     if len(inputs.shape) < 3:
-    #         inputs = inputs[:, :, np.newaxis]
-        
-    #     # plt.imshow(inputs.reshape(28, 28), cmap=plt.get_cmap('gray'))
-    #     # plt.show()
-    #     # print(inputs)
-    #     # print(inputs.shape)
-    #     # print(len(inputs.shape))
-    #     # quit()
-    #     H, W, C = inputs.shape
-    #     SH, SW = self.strides
-    #     KH, KW = self.kernel_size
-    #     F = self.filters
-    #     # !!!!! padding not implemented
-    #     self.i_val = inputs
-    #     # print (self.output_shape)
-    #     self.z_val = np.zeros(shape=self.output_shape)
-    #     # print(self.z_val.shape)
-    #     # quit()
-    #     conv(self.z_val, H, W, F, C, KH, KW, SH, SW, self.weights, self.biases, inputs)
-    #     #     ow += 1
-    #     # oh += 1
-        
-    #     # print(np.sum(self.z_val.T[5]))
-    #     # plt.imshow(self.z_val.T[25].T, cmap=plt.get_cmap('gray'))
-    #     # plt.show()
-    #     # self.z_val = np.matmul(inputs, self.weights) + self.biases
-    #     self.a_val = self.activation(self.z_val)
-    #     return self.a_val
-
     def backward_pass(self, inputs):
-        # print('dl shape =', inputs.shape)
-        # print('w shape =', self.weights.shape)
-        # print('b shape =', self.biases.shape)
+
         if self.activity_regularizer:
             inputs = inputs + self.activity_regularizer.derivative(inputs)
         a_dp = self.activation.derivative(self.z_val) * inputs
-        # test = np.arange(9).reshape(3, 3, 1)
-        # print(test.reshape(3, 3))
-        # print(dilate(test, *self.strides).reshape(5, 5))
-        # quit()
-        # print(a_dp.T[0].T)
         if not any(self.strides) > 1:
             a_dp = dilate(a_dp, self.strides[0], self.strides[1])
 
-        # print(a_dp.T[0].T)
-        # quit()
-        # z_dp = np.zeros(shape=self.weights.shape)
-        # w_grad = np.zeros(shape=self.weights.shape)
-        # b_grad = np.zeros(shape=self.biases.shape)
-        self.dloss = np.zeros(shape=self.i_val.shape)
-        # print('a shape =', a_dp.shape)
-        # print('x shape =', x_grad.shape)
-
         self.w_grad.fill(0)
         self.b_grad.fill(0)
+        self.dloss = np.zeros(shape=self.i_val.shape)
 
         H, W, C, F = self.weights.shape
         SH, SW = self.strides
         N, KH, KW, _ = a_dp.shape
         
         # convolution of i_val by a_dp
-        # print(self.w_grad.shape, N, H, W, F, C, KH, KW, a_dp.shape, self.b_grad.shape, self.i_val.shape)
-        conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
+        conv_derivative(self.w_grad, self.b_grad, N, H, W,
+                        F, C, KH, KW, a_dp, self.i_val)
 
-        # print(self.w_grad.shape)
-        # print(self.i_val.shape)
-        # print(a_dp.shape)
-        # print(H, W, F, C, KH, KW)
-        # quit()
-                                # pond_sum += inputs[h + kh, w + kw, c] * self.weights[kh, kw, c, f]
-                    # self.z_val[oh, ow, f] += pond_sum + self.biases[f]
-            #     ow += 1
-            # oh += 1
-
-        # z_dp = inputs * a_dp
-
-        # print(a_dp.shape)
         h_pad = (self.dloss.shape[1] - a_dp.shape[1])
         w_pad = (self.dloss.shape[2] - a_dp.shape[2])
         padding = (
@@ -342,18 +254,15 @@ class Conv2D(Layer):
 
         N, H, W, _ = pad_a_dp.shape
         KH, KW = self.kernel_size
-        # print(self.dloss.shape, N, H, W, F, C, KH, KW, pad_a_dp.shape, self.weights.shape)
         rotated = (self.weights[:, ::-1, ...])[::-1, ...]
         conv_xgrad(self.dloss, N, H, W, F, C, KH, KW, pad_a_dp, rotated)
-
 
         if self.kernel_regularizer:
             self.w_grad += self.kernel_regularizer.derivative(self.weights)
         if self.bias_regularizer:
             self.b_grad += self.bias_regularizer.derivative(self.biases)
-    
-        return [self.w_grad, self.b_grad], self.dloss
 
+        return [self.w_grad, self.b_grad], self.dloss
 
     def get_trainable_weights(self):
         return [self.weights, self.biases]

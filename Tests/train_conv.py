@@ -149,7 +149,7 @@ def get_light_config():
     # model.compile((28, 28, 1), metrics=["accuracy"], optimizer=SGD(momentum=0.9))
     model.compile((28, 28, 1), metrics=["accuracy"], optimizer='Adam')
     model.summary()
-
+    return model
 # more than 99. acc on tst set ? 
 def get_heavy_config():
     i = Input((28, 28, 1))()
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
     # test(1, 2)
     # s = Dttf()
-    model = get_heavy_config()
+    model = get_light_config()
     from Protodeep.layers.Layer import Layer
 
     # Layer.print_dico()
