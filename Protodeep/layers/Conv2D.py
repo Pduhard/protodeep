@@ -7,7 +7,7 @@ except ImportError:
 # import matplotlib.pyplot as plt
 
 from Protodeep.layers.Layer import Layer
-from Protodeep.utils.parse import parse_activation, parse_initializer
+from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 
 
@@ -62,11 +62,13 @@ def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
             for w in range(0, W - KW):
                 for f in range(F):
                     for kh in range(KH):
-                        th = KH - kh - 1
+                        # th = KH - kh - 1
                         for kw in range(KW):
-                            tw = KW - kw - 1
+                            # tw = KW - kw - 1
                             for c in range(C):
-                                x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, f] * weights[tw, th, c, f]  # 180 rotated
+                                # print((tw, th, c, f))
+
+                                x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, f] * weights[kh, kw, c, f]  # 180 rotated
                                 # old version :
                                 # x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, c] * weights[tw, th, c, f]  # 180 rotated
 
@@ -85,6 +87,15 @@ def dilate(arr, SH, SW):
     # quit()
     return dilated
 
+
+@class_timer
+@njit(parallel=True, fastmath=True)
+def rotate_180(arr, H, W):
+    rotated = np.empty(arr.shape)
+    for i in prange(H):
+        for j in range(W):
+            rotated[i, W-1-j] = arr[H-1-i, j]
+    return rotated
 from Protodeep.utils.debug import class_timer
 
 @class_timer
@@ -125,9 +136,9 @@ class Conv2D(Layer):
         self.use_bias = use_bias
         self.kernel_initializer = parse_initializer(kernel_initializer)
         self.bias_initializer = parse_initializer(bias_initializer)
-        self.kernel_regularizer = kernel_regularizer
-        self.bias_regularizer = bias_regularizer
-        self.activity_regularizer = activity_regularizer
+        self.kernel_regularizer = parse_regularizer(kernel_regularizer)
+        self.bias_regularizer = parse_regularizer(bias_regularizer)
+        self.activity_regularizer = parse_regularizer(activity_regularizer)
         self.kernel_constraint = kernel_constraint
         self.bias_constraint = bias_constraint
         # self.output_shape =
@@ -144,7 +155,7 @@ class Conv2D(Layer):
 
         self.biases = self.bias_initializer(self.filters)
         self.b_grad = np.zeros(self.filters)
-
+        print(self.weights.shape)
         self.output_shape = (
             # None,
             int((h - kh) / sh + 1),  # need to check what append when not round number
@@ -222,6 +233,7 @@ class Conv2D(Layer):
         # print (self.output_shape)
         self.z_val = np.zeros(shape=output_shape)
         # quit()
+        # print(self.z_val.shape, N, H, W, F, C, KH, KW, SH, SW, self.weights.shape, self.biases.shape, inputs.shape)
         conv(self.z_val, N, H, W, F, C, KH, KW, SH, SW, self.weights, self.biases, inputs)
         #     ow += 1
         # oh += 1
@@ -274,6 +286,8 @@ class Conv2D(Layer):
         # print('dl shape =', inputs.shape)
         # print('w shape =', self.weights.shape)
         # print('b shape =', self.biases.shape)
+        if self.activity_regularizer:
+            inputs = inputs + self.activity_regularizer.derivative(inputs)
         a_dp = self.activation.derivative(self.z_val) * inputs
         # test = np.arange(9).reshape(3, 3, 1)
         # print(test.reshape(3, 3))
@@ -303,7 +317,6 @@ class Conv2D(Layer):
         # print(self.w_grad.shape, N, H, W, F, C, KH, KW, a_dp.shape, self.b_grad.shape, self.i_val.shape)
         conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
 
-        
         # print(self.w_grad.shape)
         # print(self.i_val.shape)
         # print(a_dp.shape)
@@ -317,8 +330,8 @@ class Conv2D(Layer):
         # z_dp = inputs * a_dp
 
         # print(a_dp.shape)
-        h_pad = (self.dloss.shape[0] - a_dp.shape[0])
-        w_pad = (self.dloss.shape[1] - a_dp.shape[1])
+        h_pad = (self.dloss.shape[1] - a_dp.shape[1])
+        w_pad = (self.dloss.shape[2] - a_dp.shape[2])
         padding = (
                 (0, 0),
                 (h_pad, h_pad),
@@ -329,8 +342,16 @@ class Conv2D(Layer):
 
         N, H, W, _ = pad_a_dp.shape
         KH, KW = self.kernel_size
-        conv_xgrad(self.dloss, N, H, W, F, C, KH, KW, pad_a_dp, self.weights)
+        # print(self.dloss.shape, N, H, W, F, C, KH, KW, pad_a_dp.shape, self.weights.shape)
+        rotated = (self.weights[:, ::-1, ...])[::-1, ...]
+        conv_xgrad(self.dloss, N, H, W, F, C, KH, KW, pad_a_dp, rotated)
 
+
+        if self.kernel_regularizer:
+            self.w_grad += self.kernel_regularizer.derivative(self.weights)
+        if self.bias_regularizer:
+            self.b_grad += self.bias_regularizer.derivative(self.biases)
+    
         return [self.w_grad, self.b_grad], self.dloss
 
 

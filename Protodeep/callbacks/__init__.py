@@ -1,0 +1,1 @@
+from Protodeep.callbacks.EarlyStopping import EarlyStopping

@@ -16,15 +16,18 @@ from Protodeep.optimizers.Adam import Adam
 from Protodeep.metrics.Accuracy import Accuracy
 from Protodeep.losses.BinaryCrossentropy import BinaryCrossentropy
 from Protodeep.losses.MeanSquaredError import MeanSquaredError
+from Protodeep.regularizers.L1 import L1
+from Protodeep.regularizers.L2 import L2
+from Protodeep.regularizers.L1L2 import L1L2
 
 
 def parse_metrics(metrics):
     res = []
     for metric in metrics:
-        metric = metric.lower().replace('_', '')
         if isinstance(metric, str) is False:
             res.append(metric)
         else:
+            metric = metric.lower().replace('_', '')
             if metric == "accuracy":
                 res.append(Accuracy())
     return res
@@ -106,3 +109,17 @@ def parse_activation(activation):
         return Linear()
     else:
         return Linear()  # !! linear
+
+        
+def parse_regularizer(regularizer):
+    if isinstance(regularizer, str) is False:
+        return regularizer or None
+    regularizer = regularizer.lower()
+    if regularizer == "l1":
+        return L1()
+    elif regularizer == "l2":
+        return L2()
+    elif regularizer == "l1l2":
+        return L1L2()
+    else:
+        return None

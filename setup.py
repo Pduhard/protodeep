@@ -11,6 +11,7 @@ setup(
         'Protodeep.activations',
         'Protodeep.callbacks',
         'Protodeep.initializers',
+        'Protodeep.regularizers',
         'Protodeep.layers',
         'Protodeep.layers.connectors',
         'Protodeep.losses',

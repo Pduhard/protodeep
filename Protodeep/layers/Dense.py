@@ -5,7 +5,7 @@ except ImportError:
     def njit(func):
         return func
 
-from Protodeep.utils.parse import parse_activation, parse_initializer
+from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
 # def parse_initializer(initializer):
@@ -80,9 +80,9 @@ class Dense(Layer):
         self.use_bias = use_bias
         self.kernel_initializer = parse_initializer(kernel_initializer)
         self.bias_initializer = parse_initializer(bias_initializer)
-        self.kernel_regularizer = kernel_regularizer
-        self.bias_regularizer = bias_regularizer
-        self.activity_regularizer = activity_regularizer
+        self.kernel_regularizer = parse_regularizer(kernel_regularizer)
+        self.bias_regularizer = parse_regularizer(bias_regularizer)
+        self.activity_regularizer = parse_regularizer(activity_regularizer)
         self.kernel_constraint = kernel_constraint
         self.bias_constraint = bias_constraint
         self.output_shape = (
@@ -152,6 +152,8 @@ class Dense(Layer):
                 list of gradients (same order as get_trainable_weights),
                 and derivative of loss with respect to input of this layer
         """
+        if self.activity_regularizer:
+            inputs = inputs + self.activity_regularizer.derivative(inputs)
         # self.dloss = backward(self.w_grad, self.b_grad, inputs, self.activation.derivative(self.z_val), self.i_val, self.weights, inputs.shape[0])
         self.w_grad.fill(0)
         self.b_grad.fill(0)
@@ -167,6 +169,10 @@ class Dense(Layer):
             # self.dloss = np.matmul(self.weights, z_dp).T
 
         self.dloss = (self.weights @ z_dp).T
+        if self.kernel_regularizer:
+            self.w_grad += self.kernel_regularizer.derivative(self.weights)
+        if self.bias_regularizer:
+            self.b_grad += self.bias_regularizer.derivative(self.biases)
         # self.dloss = np.array(dloss)
         # print(self.dloss.shape)
         # quit()

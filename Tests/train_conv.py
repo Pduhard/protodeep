@@ -122,23 +122,14 @@ class Dttf:
 
 from Protodeep.utils.debug import class_timer
 
-
-# @class_timer
-# def test(a, b):
-#     return (a + b)
-
-if __name__ == "__main__":
-    options = parse_options()
-    dataset = Dataset(options['csv_name'], 0.2)
-
-    # test(1, 2)
-    # s = Dttf()
+def get_light_config():
+    # to_rework
     i = Input((28, 28, 1))()
     # with Conv2D(filters=2, kernel_size=(3, 3), activation='relu') as a 
-    a = Conv2D(filters=4, kernel_size=(2, 2), strides=(1, 1), activation='relu')
+    a = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu')
     conv1 = a(i)
     maxpool1 = MaxPool2D(pool_size=(2, 2))(conv1)
-    conv2 = Conv2D(filters=8, kernel_size=(2, 2), strides=(1, 1), activation='relu')(maxpool1)
+    conv2 = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu')(maxpool1)
     maxpool2 = MaxPool2D(pool_size=(2, 2))(conv2)
     flatten = Flatten()(maxpool2)
     # flatten = Flatten()(conv1)
@@ -157,8 +148,46 @@ if __name__ == "__main__":
     # model.add(2, activation="softmax")
     # model.compile((28, 28, 1), metrics=["accuracy"], optimizer=SGD(momentum=0.9))
     model.compile((28, 28, 1), metrics=["accuracy"], optimizer='Adam')
+    model.summary()
+
+# more than 99. acc on tst set ? 
+def get_heavy_config():
+    i = Input((28, 28, 1))()
+    # with Conv2D(filters=2, kernel_size=(3, 3), activation='relu') as a 
+    conv1 = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu')(i)
+    maxpool1 = MaxPool2D(pool_size=(2, 2))(conv1)
+    conv2 = Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), activation='relu')(maxpool1)
+    maxpool2 = MaxPool2D(pool_size=(2, 2))(conv2)
+    conv3 = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), activation='relu')(maxpool2)
+    # maxpool3 = MaxPool2D(pool_size=(2, 2))(conv3)
+    flatten = Flatten()(conv3)
+    # flatten = Flatten()(conv1)
+    d1 = Dense(128, activation="relu")(flatten)
+    d2 = Dense(64, activation="relu")(d1)
+    output = Dense(10, activation="softmax")(d2)
+    # output2 = Dense(10, activation="softmax")(d2)
+    # model.add(MaxPooling2D((2, 2)))
+    model = Model(inputs=i, outputs=output)
+    # model.add(Flatten())
+    # model.add(Dense(32, activation="relu"))
+    # model.add(Dense(16, activation="relu"))
+    # model.add(Dense(10, activation="softmax"))
+    # model.add(64, activation="relu")
+    # model.add(32, activation="relu")
+    # model.add(2, activation="softmax")
+    # model.compile((28, 28, 1), metrics=["accuracy"], optimizer=SGD(momentum=0.9))
+    model.compile((28, 28, 1), metrics=["accuracy"], optimizer='Adam')
     
     model.summary()
+    return model
+
+if __name__ == "__main__":
+    options = parse_options()
+    dataset = Dataset(options['csv_name'], 0.2)
+
+    # test(1, 2)
+    # s = Dttf()
+    model = get_heavy_config()
     from Protodeep.layers.Layer import Layer
 
     # Layer.print_dico()
@@ -176,10 +205,10 @@ if __name__ == "__main__":
     history = model.fit(
         features=dataset.features,
         targets=dataset.targets,
-        epochs=100,
+        epochs=10,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=3)]
+        callbacks=[EarlyStopping(monitor="val_loss", patience=2)]
     )
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)

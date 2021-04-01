@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # test(1, 2)
     # s = Dttf()
     i = Input((10, 4))()
-    lstm = LSTM(32, return_sequences=True)(i)
+    lstm = LSTM(32, return_sequences=True, kernel_regularizer='l1l2')(i)
     lstm1 = LSTM(32)(lstm)
     output = Dense(1)(lstm1)
     model = Model(inputs=i, outputs=output)

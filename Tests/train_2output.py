@@ -1,11 +1,11 @@
 from dataset import Dataset
-from model.model import Model
-from layers.Dense import Dense
-from layers.Input import Input
+from Protodeep.model.model import Model
+from Protodeep.layers.Dense import Dense
+from Protodeep.layers.Input import Input
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from callbacks.EarlyStopping import EarlyStopping
+from Protodeep.callbacks.EarlyStopping import EarlyStopping
 
 
 def parse_option_value(opt, dflt):
@@ -92,8 +92,8 @@ if __name__ == "__main__":
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
 
-    print(model.predict([dataset.test_features[1], dataset.test_features[1]]))
-    print(dataset.test_targets[1])
+    # print(model.predict([dataset.test_features[1], dataset.test_features[1]]))
+    # print(dataset.test_targets[1])
     # print("val_loss", val_loss)
     # e = np.array([1, 2, 3])
     # test(e)

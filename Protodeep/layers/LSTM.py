@@ -5,7 +5,7 @@ except ImportError:
     def njit(func):
         return func
 
-from Protodeep.utils.parse import parse_activation, parse_initializer
+from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
 # def parse_initializer(initializer):
@@ -137,11 +137,12 @@ class LSTM(Layer):
         self.kernel_initializer = parse_initializer(kernel_initializer)
         self.recurrent_initializer = parse_initializer(recurrent_initializer)
         self.bias_initializer = parse_initializer(bias_initializer)
-        self.kernel_regularizer = kernel_regularizer
-        self.bias_regularizer = bias_regularizer
-        self.activity_regularizer = activity_regularizer
-        self.kernel_constraint = kernel_constraint
-        self.bias_constraint = bias_constraint
+        self.kernel_regularizer = parse_regularizer(kernel_regularizer)
+        self.recurrent_regularizer = parse_regularizer(recurrent_regularizer)
+        self.bias_regularizer = parse_regularizer(bias_regularizer)
+        self.activity_regularizer = parse_regularizer(activity_regularizer)
+        # self.kernel_constraint = kernel_constraint
+        # self.bias_constraint = bias_constraint
         self.return_sequences = return_sequences
         self.output_shape = (
             self.units
@@ -325,6 +326,9 @@ class LSTM(Layer):
 
         rad = self.recurrent_activation.derivative
         ad = self.activation.derivative
+        
+        if self.activity_regularizer:
+            inputs = inputs + self.activity_regularizer(inputs)
         # print(inputs.shape)
         for b, inpt in enumerate(inputs):
             # print(inpt.shape)
@@ -392,6 +396,26 @@ class LSTM(Layer):
         self.bi_g /= batch_size
         self.bo_g /= batch_size
         self.bc_g /= batch_size
+
+        if self.kernel_regularizer:
+            self.wc_g += self.kernel_regularizer.derivative(self.wc)
+            self.hwc_g += self.kernel_regularizer.derivative(self.hwc)
+
+        if self.recurrent_regularizer:
+            self.wf_g += self.recurrent_regularizer.derivative(self.wf)
+            self.wi_g += self.recurrent_regularizer.derivative(self.wi)
+            self.wo_g += self.recurrent_regularizer.derivative(self.wo)
+            self.hwf_g += self.recurrent_regularizer.derivative(self.hwf)
+            self.hwi_g += self.recurrent_regularizer.derivative(self.hwi)
+            self.hwo_g += self.recurrent_regularizer.derivative(self.hwo)
+            # self.w_grad += self.recurrent_regularizer.derivative(self.weights)
+        
+        if self.bias_regularizer:
+            self.bf_g += self.bias_regularizer.derivative(self.bf)
+            self.bi_g += self.bias_regularizer.derivative(self.bi)
+            self.bo_g += self.bias_regularizer.derivative(self.bo)
+            self.bc_g += self.bias_regularizer.derivative(self.bc)
+        
         return self.get_gradients(), self.dloss
         
 
