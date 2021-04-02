@@ -3,13 +3,14 @@ import numpy as np
 
 class SGD:
 
-    velocity = []
-    apply_gradient = None
-
     def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False):
         self.learning_rate = learning_rate
         self.momentum = momentum
         self.nesterov = nesterov
+
+        self.velocity = []
+        self.apply_gradient = None
+
         if self.momentum <= 0:
             self.apply_gradient = self.stochastic_gradient_descent
         elif self.nesterov is False:

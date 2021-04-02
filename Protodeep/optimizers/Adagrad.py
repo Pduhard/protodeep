@@ -3,14 +3,16 @@ import numpy as np
 
 class Adagrad:
 
-    acc = []
-    apply_gradient = None
-
     def __init__(self, learning_rate=0.01,
                  initial_acc_value=0.01, epsilon=1e-8):
         self.learning_rate = learning_rate
         self.initial_acc_value = initial_acc_value
         self.epsilon = epsilon
+        
+        self.acc = []
+        self.apply_gradient = None
+
+
         self.apply_gradient = self.adagrad
 
     def add_weight(self, weight):

@@ -33,16 +33,16 @@ from Protodeep.layers.Layer import Layer
 class Input(Layer):
 
     total_instance = 0
-    weights = None
-    w_grad = None
+    # weights = None
+    # w_grad = None
 
-    biases = None
-    b_grad = None
+    # biases = None
+    # b_grad = None
 
-    a_val = None
-    z_val = None
-    i_val = None
-    dloss = None
+    # a_val = None
+    # z_val = None
+    # i_val = None
+    # dloss = None
 
     def __init__(self, shape=None):
         name = 'input'

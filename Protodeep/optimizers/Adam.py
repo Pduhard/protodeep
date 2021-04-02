@@ -9,13 +9,6 @@ def test(lr, v_at, epsilon, m_at):
 
 class Adam:
 
-    v = []
-    m = []
-    v_at = []
-
-    apply_gradient = None
-    t = 1
-
     def __init__(self, learning_rate=0.001, beta_1=0.9,
                  beta_2=0.999, epsilon=1e-7, amsgrad=False):
         self.learning_rate = learning_rate
@@ -23,6 +16,14 @@ class Adam:
         self.beta_2 = beta_2
         self.epsilon = epsilon
         self.amsgrad = amsgrad
+
+        self.v = []
+        self.m = []
+        self.v_at = []
+
+        self.apply_gradient = None
+        self.t = 1
+        
         if self.amsgrad:
             self.apply_gradient = self.amsgrad_adam
         else:

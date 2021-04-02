@@ -110,8 +110,6 @@ class LSTM(Layer):
 
     # a_val = None
     # z_val = None
-    i_val = None
-    dloss = None
 
     def __init__(self, units, activation='tanh', recurrent_activation='sigmoid',
                  use_bias=True, kernel_initializer='glorot_uniform',
@@ -126,6 +124,9 @@ class LSTM(Layer):
         super().__init__(trainable=True, name=name)
         self.__class__.total_instance += 1
 
+        self.i_val = None
+        self.dloss = None
+        
         self.units = units
         self.activation = parse_activation(activation)
         self.recurrent_activation = parse_activation(recurrent_activation)

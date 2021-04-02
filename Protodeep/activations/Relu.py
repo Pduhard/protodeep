@@ -1,20 +1,16 @@
 from Protodeep.activations.Activation import Activation
 import numpy as np
-try:
-    from numba import njit
-except ImportError:
-    def njit(func):
-        return func
+from numba import njit
 
 
 @njit
 def relu(inputs):
-    return np.where(inputs < 0, 0, inputs)
+    return np.where(inputs < 0, 0., inputs)
 
 
 @njit
 def relu_derivative(inputs):
-    return np.where(inputs > 0, 1, 0)
+    return np.where(inputs > 0, 1., 0.)
 
 
 class Relu(Activation):

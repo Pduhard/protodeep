@@ -8,12 +8,12 @@ from Protodeep.utils.debug import class_timer
 class Flatten(Layer):
 
     total_instance = 0
-    i_val = None
-    z_val = None
-    a_val = None
-    dloss = None
+    # i_val = None
+    # z_val = None
+    # a_val = None
+    # dloss = None
 
-    input_shape = None
+    # input_shape = None
 
     def __init__(self, data_format=None):
         name = 'flatten'

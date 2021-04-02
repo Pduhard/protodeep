@@ -1,10 +1,6 @@
 from Protodeep.activations.Activation import Activation
 import numpy as np
-try:
-    from numba import njit
-except ImportError:
-    def njit(func):
-        return func
+from numba import njit
 
 epsilon = 1e-8
 
@@ -35,8 +31,8 @@ def tanh_derivative(inputs):
 
 class Tanh(Activation):
 
-    def __init__(self, axis=-1):
-        self.axis = axis
+    def __init__(self):
+        pass
 
     def __call__(self, inputs):
         return tanh(inputs)

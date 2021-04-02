@@ -3,3 +3,4 @@ from Protodeep.activations.Relu import Relu
 from Protodeep.activations.Sigmoid import Sigmoid
 from Protodeep.activations.Softmax import Softmax
 from Protodeep.activations.Tanh import Tanh
+from Protodeep.activations.Activation import Activation

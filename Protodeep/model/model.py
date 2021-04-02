@@ -12,24 +12,21 @@ epsilon = 1e-8
 
 @class_timer
 class Model:
-    layers = []
-    weights = []
-    gradients = []
-    biases = []
-    delta_weights = []
-    delta_biases = []
-    metrics = []
-    optimizer = None
-    loss: callable = None
-    logs: dict = None
-    val_set = False
-    graph = {}
-    flatten_graph = None
 
     from ._build import add, compile, build_graph, build
     from ._evaluate import evaluate
 
     def __init__(self, options=None, inputs=None, outputs=None):
+        self.layers = []
+        self.weights = []
+        self.gradients = []
+        self.metrics = []
+        self.optimizer = None
+        self.loss: callable = None
+        self.logs: dict = None
+        self.val_set = False
+        self.graph = {}
+        self.flatten_graph = None
         self.linked = False
         self.linear = True  # linearly connected layers
         self.test_size = 0

@@ -3,16 +3,18 @@ from Protodeep.layers.connectors.Connector import Connector
 
 class Layer:
 
-    input_connectors = None
-    output_connectors = None
     layer_dico = {}
 
     def __init__(self, trainable=True, name=None, dtype=None, dynamic=False):
+        
+        self.input_connectors = None
+        self.output_connectors = None
         self.trainable = trainable
         self.name = name
         self.dtype = dtype
         self.dynamic = dynamic
         self.layer_dico[name] = self
+        self.locked = False  # used by model class to build ùultiple graphs
 
     def __call__(self, connectors):
         """

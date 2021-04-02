@@ -3,10 +3,6 @@ import numpy as np
 
 class RMSProp:
 
-    acc = []
-    velocity = []
-    apply_gradient = None
-
     def __init__(self, learning_rate=0.001, rho=0.9,
                  momentum=0.9, epsilon=1e-8, centered=False):
         self.learning_rate = learning_rate
@@ -14,6 +10,10 @@ class RMSProp:
         self.momentum = momentum
         self.epsilon = epsilon
         self.centered = centered
+
+        self.acc = []
+        self.velocity = []
+        self.apply_gradient = None
 
         if momentum > 0:
             self.apply_gradient = self.momentum_rmsprop

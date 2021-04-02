@@ -54,16 +54,6 @@ from Protodeep.layers.Layer import Layer
 class Dense(Layer):
 
     total_instance = 0
-    weights = None
-    w_grad = None
-
-    biases = None
-    b_grad = None
-
-    a_val = None
-    z_val = None
-    i_val = None
-    dloss = None
 
     def __init__(self, units, activation=None, use_bias=True,
                  kernel_initializer='glorot_uniform',
@@ -74,6 +64,18 @@ class Dense(Layer):
             name += '_' + str(self.__class__.total_instance)
         super().__init__(trainable=True, name=name)
         self.__class__.total_instance += 1
+
+        self.weights = None
+        self.w_grad = None
+
+        self.biases = None
+        self.b_grad = None
+
+        self.a_val = None
+        self.z_val = None
+        self.i_val = None
+        self.dloss = None
+
         self.units = units
         self.activation = parse_activation(activation)
         self.use_bias = use_bias

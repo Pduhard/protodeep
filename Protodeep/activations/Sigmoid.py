@@ -17,7 +17,7 @@ epsilon = 1e-8
 # def vsigmoid(x, xsum):
 #     return np.exp(x) / (xsum + epsilon)
 
-# @njit
+@njit
 def sigmoid(inputs):
     return 1 / (1 + np.exp(-inputs))
     # while (np.max(np.abs(inputs)) > 10):
@@ -27,7 +27,7 @@ def sigmoid(inputs):
     # return (np.vectorize(vsigmoid)(inputs, xsum))
 
 
-# @njit
+@njit
 def sigmoid_derivative(inputs):
     activ = sigmoid(inputs)
     return activ * (1 - activ)
