@@ -68,8 +68,7 @@ class Dense(Layer):
     def __init__(self, units, activation=None, use_bias=True,
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros', kernel_regularizer=None,
-                 bias_regularizer=None, activity_regularizer=None,
-                 kernel_constraint=None, bias_constraint=None):
+                 bias_regularizer=None, activity_regularizer=None):
         name = 'dense'
         if self.__class__.total_instance > 0:
             name += '_' + str(self.__class__.total_instance)
@@ -83,21 +82,21 @@ class Dense(Layer):
         self.kernel_regularizer = parse_regularizer(kernel_regularizer)
         self.bias_regularizer = parse_regularizer(bias_regularizer)
         self.activity_regularizer = parse_regularizer(activity_regularizer)
-        self.kernel_constraint = kernel_constraint
-        self.bias_constraint = bias_constraint
         self.output_shape = (
-            # None,
             self.units
         )
 
     def __call__(self, connectors):
+
         if isinstance(connectors.shape, tuple):
             connectors.shape = connectors.shape[-1]
         weight_shape = (connectors.shape, self.units)
         self.weights = self.kernel_initializer(weight_shape)
         self.w_grad = np.zeros(weight_shape)
-        self.biases = self.bias_initializer(self.units)
-        self.b_grad = np.zeros(self.units)
+
+        if self.use_bias:
+            self.biases = self.bias_initializer(self.units)
+            self.b_grad = np.zeros(self.units)
 
         self.input_connectors = connectors
         self.output_connectors = self.new_output_connector(
@@ -105,43 +104,32 @@ class Dense(Layer):
         )
         return self.output_connectors
 
-    def compile(self, input_shape):
-        """ input must be a 1d array """
-        if isinstance(input_shape, tuple):
-            input_shape = input_shape[-1]
-        weight_shape = (input_shape, self.units)
-        self.weights = self.kernel_initializer(weight_shape)
-        self.w_grad = np.empty(weight_shape)
-        self.biases = self.bias_initializer(self.units)
-        self.b_grad = np.empty(self.units)
-        # self.dloss = np.empty()
-        # print(self.weights.shape)
-        # print(self.biases.shape)
-        # print("------------")
-        # return self.units
-
-    def init_gradients(self, batch_size):
-        self.w_grad = np.empty(self.weights.shape)
-        self.b_grad = np.empty(self.biases.shape)
-        self.dloss = np.empty((batch_size, self.input_connectors.shape))
-        print('dlosss', self.dloss.shape)
+    # def init_gradients(self, batch_size):
+    #     self.w_grad = np.empty(self.weights.shape)
+    #     self.b_grad = np.empty(self.biases.shape)
+    #     self.dloss = np.empty((batch_size, self.input_connectors.shape))
         # self.w_grad.fill(0)
         # self.b_grad.fill(0)
         # self.dloss.fill(0)
     
     def reset_gradients(self):
         self.w_grad.fill(0)
-        self.b_grad.fill(0)
-        self.dloss.fill(0)
+        if self.use_bias:
+            self.b_grad.fill(0)
+
+    def regularize(self):
+        if self.kernel_regularizer:
+            self.w_grad += self.kernel_regularizer.derivative(self.weights)
+        if self.use_bias and self.bias_regularizer:
+            self.b_grad += self.bias_regularizer.derivative(self.biases)
 
     def forward_pass(self, inputs):
-        # print(inputs.shape)
-        # print(self.weights.shape)
         self.i_val = inputs
-        self.z_val = np.dot(inputs, self.weights) + self.biases
+        if self.use_bias:
+            self.z_val = np.dot(inputs, self.weights) + self.biases
+        else:
+            self.z_val = np.dot(inputs, self.weights)
         self.a_val = self.activation(self.z_val)
-        # print(self.a_val.shape)
-        # quit()
         return self.a_val
 
     def backward_pass(self, inputs):
@@ -152,64 +140,29 @@ class Dense(Layer):
                 list of gradients (same order as get_trainable_weights),
                 and derivative of loss with respect to input of this layer
         """
+        # self.dloss = backward(self.w_grad, self.b_grad, inputs, self.activation.derivative(self.z_val), self.i_val, self.weights, inputs.shape[0])
+        
         if self.activity_regularizer:
             inputs = inputs + self.activity_regularizer.derivative(inputs)
-        # self.dloss = backward(self.w_grad, self.b_grad, inputs, self.activation.derivative(self.z_val), self.i_val, self.weights, inputs.shape[0])
-        self.w_grad.fill(0)
-        self.b_grad.fill(0)
+        
+        self.reset_gradients()
         a_dp = self.activation.derivative(self.z_val)
         z_dp = (inputs * a_dp).T
 
         self.w_grad += (z_dp @ self.i_val).T / inputs.shape[0]
-        self.b_grad += np.mean(z_dp, axis=-1)
-        # for i in range(inputs.shape[0]):
-            # self.self.w_grad += np.outer(z_dp[i], self.i_val[i]).T
-            # self.self.b_grad += z_dp[i]
-            # dloss.append(np.matmul(self.weights, z_dp[i]))
-            # self.dloss = np.matmul(self.weights, z_dp).T
+        if self.use_bias:
+            self.b_grad += np.mean(z_dp, axis=-1)
 
         self.dloss = (self.weights @ z_dp).T
-        if self.kernel_regularizer:
-            self.w_grad += self.kernel_regularizer.derivative(self.weights)
-        if self.bias_regularizer:
-            self.b_grad += self.bias_regularizer.derivative(self.biases)
-        # self.dloss = np.array(dloss)
-        # print(self.dloss.shape)
-        # quit()
-        return [self.w_grad, self.b_grad], self.dloss
+
+        self.regularize()
+        return self.get_gradients(), self.dloss
         
-
-    # def backward_pass(self, inputs):
-    #     a_dp = self.activation.derivative(self.z_val)
-    #     z_dp = inputs * a_dp
-    #     # print(a_dp.shape)
-    #     # print(z_dp.shape)
-    #     # print(self.i_val.shape)
-    #     # print(self.w_grad.shape)
-
-    #     # self.w_grad = z_dp[:, :, np.newaxis] * self.i_val[:, np.newaxis, :] / inputs.shape[0]
-    #     # [1, 1, 2, ]
-
-    #     self.w_grad += np.matmul(z_dp.T, self.i_val).T / inputs.shape[0]
-    #     # print('ok')
-    #     # self.w_grad += np.outer(z_dp, self.i_val).T / inputs.shape[0]
-
-    #     # (2,) (32,) ==> (32, 2)
-    #     # (16, 2) (16, 32) ==> (32, 2)
-    #     # z_dp i_val ==> 
-    #     # print(np.sum(z_dp, axis=0).shape)
-    #     self.b_grad += np.sum(z_dp, axis=0) / inputs.shape[0]
-    #     self.dloss = np.matmul(self.weights, z_dp.T).T
-    #     # print(self.dloss.shape)
-    #     # print(self.i_val.shape)
-    #     return self.dloss
-
     def get_trainable_weights(self):
-        return [self.weights, self.biases]
-
+        return [self.weights, self.biases] if self.use_bias else [self.weights]
 
     def get_gradients(self):
-        return [self.w_grad, self.b_grad]
+        return [self.w_grad, self.b_grad] if self.use_bias else [self.w_grad]
     
     def set_weights(self, weights):
         if len(weights) != 2:

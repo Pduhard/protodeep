@@ -2,5 +2,8 @@
     "sourcery.token": "user_HVs1M_kQl8bvrjmu4EZIsEZQNptuKcJcx5MVUfS5xnF9nVi_PAiI8nurxmU",
     "python.linting.flake8Enabled": true,
     "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+    ],
 }

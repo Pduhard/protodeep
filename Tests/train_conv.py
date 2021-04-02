@@ -126,15 +126,15 @@ def get_light_config():
     # to_rework
     i = Input((28, 28, 1))()
     # with Conv2D(filters=2, kernel_size=(3, 3), activation='relu') as a 
-    a = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu')
+    a = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu', use_bias=False)
     conv1 = a(i)
     maxpool1 = MaxPool2D(pool_size=(2, 2))(conv1)
-    conv2 = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu')(maxpool1)
+    conv2 = Conv2D(filters=16, kernel_size=(3, 3), strides=(1, 1), activation='relu', use_bias=True)(maxpool1)
     maxpool2 = MaxPool2D(pool_size=(2, 2))(conv2)
     flatten = Flatten()(maxpool2)
     # flatten = Flatten()(conv1)
-    d1 = Dense(64, activation="relu")(flatten)
-    d2 = Dense(32, activation="relu")(d1)
+    d1 = Dense(64, activation="relu", use_bias=False)(flatten)
+    d2 = Dense(32, activation="relu", use_bias=False)(d1)
     output = Dense(10, activation="softmax")(d2)
     # output2 = Dense(10, activation="softmax")(d2)
     # model.add(MaxPooling2D((2, 2)))
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
     for i in range(10):
         print(np.argmax(model.predict(dataset.test_features[i:i+1])), dataset.test_targets[i:i+1])
-        plt.imshow(dataset.test_features[i], cmap='gray')
+        plt.imshow(dataset.test_features[i].reshape(28, 28), cmap='gray')
         plt.show()
     # print("val_loss", val_loss)
     # e = np.array([1, 2, 3])

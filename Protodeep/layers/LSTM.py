@@ -116,33 +116,31 @@ class LSTM(Layer):
     def __init__(self, units, activation='tanh', recurrent_activation='sigmoid',
                  use_bias=True, kernel_initializer='glorot_uniform',
                  recurrent_initializer='glorot_uniform',
-                #  recurrent_initializer='orthogonal', 
                  bias_initializer='zeros', unit_forget_bias=True,
                  kernel_regularizer=None, recurrent_regularizer=None,
                  bias_regularizer=None, activity_regularizer=None,
-                 kernel_constraint=None, recurrent_constraint=None,
-                 bias_constraint=None, dropout=0.0, recurrent_dropout=0.0,
-                 return_sequences=False, return_state=False,
-                 go_backwards=False, stateful=False, time_major=False,
-                 unroll=False):
+                 return_sequences=False):
         name = 'lstm'
         if self.__class__.total_instance > 0:
             name += '_' + str(self.__class__.total_instance)
         super().__init__(trainable=True, name=name)
         self.__class__.total_instance += 1
+
         self.units = units
         self.activation = parse_activation(activation)
         self.recurrent_activation = parse_activation(recurrent_activation)
         self.use_bias = use_bias
         self.kernel_initializer = parse_initializer(kernel_initializer)
         self.recurrent_initializer = parse_initializer(recurrent_initializer)
-        self.bias_initializer = parse_initializer(bias_initializer)
+        self.unit_forget_bias = unit_forget_bias
+        if unit_forget_bias:
+            self.bias_initializer = parse_initializer('zeros')
+        else:
+            self.bias_initializer = parse_initializer(bias_initializer)
         self.kernel_regularizer = parse_regularizer(kernel_regularizer)
         self.recurrent_regularizer = parse_regularizer(recurrent_regularizer)
         self.bias_regularizer = parse_regularizer(bias_regularizer)
         self.activity_regularizer = parse_regularizer(activity_regularizer)
-        # self.kernel_constraint = kernel_constraint
-        # self.bias_constraint = bias_constraint
         self.return_sequences = return_sequences
         self.output_shape = (
             self.units
@@ -170,11 +168,6 @@ class LSTM(Layer):
         self.hwo = self.recurrent_initializer(hidden_weight_shape)
         self.hwc = self.kernel_initializer(hidden_weight_shape)
         
-        self.bf = self.bias_initializer(self.units)
-        self.bi = self.bias_initializer(self.units)
-        self.bo = self.bias_initializer(self.units)
-        self.bc = self.bias_initializer(self.units)
-        # self.weights = self.kernel_initializer(weight_shape)
         self.wf_g = np.zeros(weight_shape)
         self.wi_g = np.zeros(weight_shape)
         self.wo_g = np.zeros(weight_shape)
@@ -184,11 +177,20 @@ class LSTM(Layer):
         self.hwi_g = np.zeros(hidden_weight_shape)
         self.hwo_h = np.zeros(hidden_weight_shape)
         self.hwc_g = np.zeros(hidden_weight_shape)
+    
+        if self.use_bias:
+            self.bf = self.bias_initializer(self.units)
+            self.bi = self.bias_initializer(self.units)
+            self.bo = self.bias_initializer(self.units)
+            self.bc = self.bias_initializer(self.units)
+            if self.unit_forget_bias:
+                self.bf += 1
+        # self.weights = self.kernel_initializer(weight_shape)
 
-        self.bf_g = np.zeros(self.units)
-        self.bi_g = np.zeros(self.units)
-        self.bo_g = np.zeros(self.units)
-        self.bc_g = np.zeros(self.units)
+            self.bf_g = np.zeros(self.units)
+            self.bi_g = np.zeros(self.units)
+            self.bo_g = np.zeros(self.units)
+            self.bc_g = np.zeros(self.units)
         # self.biases = self.bias_initializer(self.units)
         # self.b_grad = np.zeros(self.units)
 
@@ -204,44 +206,8 @@ class LSTM(Layer):
         )
         return self.output_connectors
 
-    def compile(self, input_shape):
-        """ input must be a 1d array """
-        print('ha')
-        quit()
-        # if isinstance(input_shape, tuple):
-        #     input_shape = input_shape[-1]
-        # weight_shape = (input_shape, self.units)
-        # self.weights = self.kernel_initializer(weight_shape)
-        # self.w_grad = np.empty(weight_shape)
-        # self.biases = self.bias_initializer(self.units)
-        # self.b_grad = np.empty(self.units)
-        # self.dloss = np.empty()
-        
-
-        # print(self.weights.shape)
-        # print(self.biases.shape)
-        # print("------------")
-        # return self.units
-
-    def init_gradients(self, batch_size):
-        print('ahhh init gradients lstm: obsolete')
-        quit()
-        # self.w_grad = np.empty(self.weights.shape)
-        # self.b_grad = np.empty(self.biases.shape)
-        # self.dloss = np.empty((batch_size, self.input_connectors.shape))
-        # print('dlosss', self.dloss.shape)
-        # self.w_grad.fill(0)
-        # self.b_grad.fill(0)
-        # self.dloss.fill(0)
     
     def reset_gradients(self):
-        print('ahhh reset gradients lstm: obsolete')
-        quit()
-        self.w_grad.fill(0)
-        self.b_grad.fill(0)
-        self.dloss.fill(0)
-
-    def _reset_gradients(self):
         self.dloss = np.zeros(shape=(self.i_val.shape))
         self.wf_g.fill(0)
         self.wi_g.fill(0)
@@ -253,10 +219,11 @@ class LSTM(Layer):
         self.hwo_h.fill(0)
         self.hwc_g.fill(0)
 
-        self.bf_g.fill(0)
-        self.bi_g.fill(0)
-        self.bo_g.fill(0)
-        self.bc_g.fill(0)
+        if self.use_bias:
+            self.bf_g.fill(0)
+            self.bi_g.fill(0)
+            self.bo_g.fill(0)
+            self.bc_g.fill(0)
 
     def _init_cache(self, batch_size, timestep):
         self.af = np.zeros(shape=(batch_size, timestep + 1, self.units))
@@ -273,6 +240,27 @@ class LSTM(Layer):
         self.cs = np.zeros(shape=(batch_size, timestep + 1, self.units))
         self.out_val = np.zeros(shape=(batch_size, timestep, self.units))
 
+    def regularize(self):
+        
+        if self.kernel_regularizer:
+            self.wc_g += self.kernel_regularizer.derivative(self.wc)
+            self.hwc_g += self.kernel_regularizer.derivative(self.hwc)
+
+        if self.recurrent_regularizer:
+            self.wf_g += self.recurrent_regularizer.derivative(self.wf)
+            self.wi_g += self.recurrent_regularizer.derivative(self.wi)
+            self.wo_g += self.recurrent_regularizer.derivative(self.wo)
+            self.hwf_g += self.recurrent_regularizer.derivative(self.hwf)
+            self.hwi_g += self.recurrent_regularizer.derivative(self.hwi)
+            self.hwo_g += self.recurrent_regularizer.derivative(self.hwo)
+            # self.w_grad += self.recurrent_regularizer.derivative(self.weights)
+        
+        if self.use_bias and self.bias_regularizer:
+            self.bf_g += self.bias_regularizer.derivative(self.bf)
+            self.bi_g += self.bias_regularizer.derivative(self.bi)
+            self.bo_g += self.bias_regularizer.derivative(self.bo)
+            self.bc_g += self.bias_regularizer.derivative(self.bc)
+
     def forward_pass(self, inputs):
 
         self.i_val = inputs
@@ -281,10 +269,16 @@ class LSTM(Layer):
         for b, inpt in enumerate(inputs):
             for i, x in enumerate(inpt, start=1):
 
-                self.zf[b, i] += x @ self.wf + self.hs[b, i - 1] @ self.hwf + self.bf
-                self.zi[b, i] += x @ self.wi + self.hs[b, i - 1] @ self.hwi + self.bi
-                self.zo[b, i] += x @ self.wo + self.hs[b, i - 1] @ self.hwo + self.bo
-                self.zc[b, i] += x @ self.wc + self.hs[b, i - 1] @ self.hwc + self.bc 
+                if self.use_bias:
+                    self.zf[b, i] += x @ self.wf + self.hs[b, i - 1] @ self.hwf + self.bf
+                    self.zi[b, i] += x @ self.wi + self.hs[b, i - 1] @ self.hwi + self.bi
+                    self.zo[b, i] += x @ self.wo + self.hs[b, i - 1] @ self.hwo + self.bo
+                    self.zc[b, i] += x @ self.wc + self.hs[b, i - 1] @ self.hwc + self.bc
+                else:
+                    self.zf[b, i] += x @ self.wf + self.hs[b, i - 1] @ self.hwf
+                    self.zi[b, i] += x @ self.wi + self.hs[b, i - 1] @ self.hwi
+                    self.zo[b, i] += x @ self.wo + self.hs[b, i - 1] @ self.hwo
+                    self.zc[b, i] += x @ self.wc + self.hs[b, i - 1] @ self.hwc
 
                 self.af[b, i] += self.recurrent_activation(self.zf[b, i])
                 self.ai[b, i] += self.recurrent_activation(self.zi[b, i])
@@ -307,22 +301,7 @@ class LSTM(Layer):
                 and derivative of loss with respect to input of this layer
         """
         batch_size, timesteps, _ = self.i_val.shape
-        self._reset_gradients()
-        # self.dloss = np.zeros(shape=(self.i_val.shape))
-        # self.wf_g.fill(0)
-        # self.wi_g.fill(0)
-        # self.wo_g.fill(0)
-        # self.wc_g.fill(0)
-
-        # self.hwf_g.fill(0)
-        # self.hwi_g.fill(0)
-        # self.hwo_h.fill(0)
-        # self.hwc_g.fill(0)
-
-        # self.bf_g.fill(0)
-        # self.bi_g.fill(0)
-        # self.bo_g.fill(0)
-        # self.bc_g.fill(0)
+        self.reset_gradients()
 
         rad = self.recurrent_activation.derivative
         ad = self.activation.derivative
@@ -354,22 +333,23 @@ class LSTM(Layer):
                 dlzo = dly * self.activation(self.cs[b, i]) * rad(self.zo[b, i])
 
                 # derivative of loss with respect to weights
-                self.wf_g += np.outer(dlzf, self.i_val[b, i - 1]).T
-                self.wi_g += np.outer(dlzi, self.i_val[b, i - 1]).T
-                self.wc_g += np.outer(dlzc, self.i_val[b, i - 1]).T
-                self.wo_g += np.outer(dlzo, self.i_val[b, i - 1]).T
+                self.wf_g += np.outer(dlzf, self.i_val[b, i - 1]).T / batch_size
+                self.wi_g += np.outer(dlzi, self.i_val[b, i - 1]).T / batch_size
+                self.wc_g += np.outer(dlzc, self.i_val[b, i - 1]).T / batch_size
+                self.wo_g += np.outer(dlzo, self.i_val[b, i - 1]).T / batch_size
 
                 # derivative of loss with respect to hidden weights
-                self.hwf_g += np.outer(dlzf, self.hs[b, i - 1]).T
-                self.hwi_g += np.outer(dlzi, self.hs[b, i - 1]).T
-                self.hwc_g += np.outer(dlzc, self.hs[b, i - 1]).T
-                self.hwo_h += np.outer(dlzo, self.hs[b, i - 1]).T
+                self.hwf_g += np.outer(dlzf, self.hs[b, i - 1]).T / batch_size
+                self.hwi_g += np.outer(dlzi, self.hs[b, i - 1]).T / batch_size
+                self.hwc_g += np.outer(dlzc, self.hs[b, i - 1]).T / batch_size
+                self.hwo_h += np.outer(dlzo, self.hs[b, i - 1]).T / batch_size
 
                 # derivative of loss with respect to biases
-                self.bf_g += dlzf
-                self.bi_g += dlzi
-                self.bc_g += dlzc
-                self.bo_g += dlzo
+                if self.use_bias:
+                    self.bf_g += dlzf / batch_size
+                    self.bi_g += dlzi / batch_size
+                    self.bc_g += dlzc / batch_size
+                    self.bo_g += dlzo / batch_size
 
                 # derivative of loss with respect to input of cell
                 self.dloss[b, i - 1] += (self.wf @ dlzf + self.wi @ dlzi + self.wc @ dlzc + self.wo @ dlzo).T
@@ -384,37 +364,8 @@ class LSTM(Layer):
                 dlcsnext = dlcsnext * self.af[b, i] + dlcs * self.af[b, i]
                 # print('ok')
                 # quit()
-        self.wf_g /= batch_size
-        self.wi_g /= batch_size
-        self.wo_g /= batch_size
-        self.wc_g /= batch_size
-        self.hwf_g /= batch_size
-        self.hwi_g /= batch_size
-        self.hwo_h /= batch_size
-        self.hwc_g /= batch_size
-        self.bf_g /= batch_size
-        self.bi_g /= batch_size
-        self.bo_g /= batch_size
-        self.bc_g /= batch_size
 
-        if self.kernel_regularizer:
-            self.wc_g += self.kernel_regularizer.derivative(self.wc)
-            self.hwc_g += self.kernel_regularizer.derivative(self.hwc)
-
-        if self.recurrent_regularizer:
-            self.wf_g += self.recurrent_regularizer.derivative(self.wf)
-            self.wi_g += self.recurrent_regularizer.derivative(self.wi)
-            self.wo_g += self.recurrent_regularizer.derivative(self.wo)
-            self.hwf_g += self.recurrent_regularizer.derivative(self.hwf)
-            self.hwi_g += self.recurrent_regularizer.derivative(self.hwi)
-            self.hwo_g += self.recurrent_regularizer.derivative(self.hwo)
-            # self.w_grad += self.recurrent_regularizer.derivative(self.weights)
-        
-        if self.bias_regularizer:
-            self.bf_g += self.bias_regularizer.derivative(self.bf)
-            self.bi_g += self.bias_regularizer.derivative(self.bi)
-            self.bo_g += self.bias_regularizer.derivative(self.bo)
-            self.bc_g += self.bias_regularizer.derivative(self.bc)
+        self.regularize()
         
         return self.get_gradients(), self.dloss
         
@@ -433,8 +384,16 @@ class LSTM(Layer):
             self.bi,
             self.bo,
             self.bc
+        ] if self.use_bias else [
+            self.wf,
+            self.wi,
+            self.wo,
+            self.wc,
+            self.hwf,
+            self.hwi,
+            self.hwo,
+            self.hwc
         ]
-
 
     def get_gradients(self):
         return [
@@ -450,6 +409,15 @@ class LSTM(Layer):
             self.bi_g,
             self.bo_g,
             self.bc_g
+        ] if self.use_bias else [
+            self.wf_g,
+            self.wi_g,
+            self.wo_g,
+            self.wc_g,
+            self.hwf_g,
+            self.hwi_g,
+            self.hwo_h,
+            self.hwc_g
         ]
 
     def set_weights(self, weights):
