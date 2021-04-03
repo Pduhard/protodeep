@@ -107,11 +107,11 @@ if __name__ == "__main__":
         epochs=100,
         batch_size=32,
         validation_data=(x_test, y_test),
-        callbacks=[EarlyStopping(monitor="val_loss", patience=2)]
+        callbacks=[EarlyStopping(monitor="val_loss", patience=2, restore_best_weights=True)]
     )
-    model.evaluate(
+    print(model.evaluate(
         validation_data=(x_test, y_test)
-    )
+    ))
     # plt.plot(history['accuracy'])
     # plt.plot(history['val_accuracy'])
     # plt.ylabel('accuracy')

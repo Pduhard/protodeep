@@ -131,6 +131,7 @@ class Model:
         #     l.init_gradients(batch_size)
         if callbacks is not None:
             for c in callbacks:
+                c.set_model(self)
                 c.on_fit_start()
         self.init_logs()
         if batch_size > len(features[0]):
@@ -275,3 +276,18 @@ class Model:
         self.gradients = []
         self.build()
         return self
+    
+    def get_weights(self):
+        return self.weights
+
+    def set_weights(self, new_weights):
+        if len(self.weights) != len(new_weights):
+            print(
+                'set weight error: New weights does not contain as many matrix as expected'
+                f'expected: {len(self.weights)} matrix'
+                f'actual: {len(new_weights)} matrix'
+            )
+        for weight, new_weight in zip(self.weights, new_weights):
+            weight.fill(0)
+            weight += new_weight
+            # weight[...] = new_weight[...]

@@ -1,5 +1,7 @@
 class Activation:
-
+    """
+        Activation template class
+    """
     def __call__(self, inputs):
         NotImplementedError
 

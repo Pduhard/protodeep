@@ -1,42 +1,28 @@
 from Protodeep.activations.Activation import Activation
 import numpy as np
-try:
-    from numba import njit
-except ImportError:
-    def njit(func):
-        return func
-
-epsilon = 1e-8
+from numba import njit
 
 
-# @jit
-# @vectorize
-
-
-# @jit
-# def vsigmoid(x, xsum):
-#     return np.exp(x) / (xsum + epsilon)
-
-@njit
+@njit(fastmath=True)
 def sigmoid(inputs):
     return 1 / (1 + np.exp(-inputs))
-    # while (np.max(np.abs(inputs)) > 10):
-    #     inputs /= 2
-    # xsum = np.sum(np.exp(inputs))
-    # return np.array([np.exp(x) / (xsum + epsilon) for x in inputs])
-    # return (np.vectorize(vsigmoid)(inputs, xsum))
 
 
-@njit
+@njit(fastmath=True)
 def sigmoid_derivative(inputs):
-    activ = sigmoid(inputs)
+    activ = 1 / (1 + np.exp(-inputs))
     return activ * (1 - activ)
 
 
 class Sigmoid(Activation):
+    """
+        Sigmoid activation:
+            f(x) = 1 / (1 + exp(-x))
+            f'(x) = f(x) * (1 - f(x))
+    """
 
-    def __init__(self, axis=-1):
-        self.axis = axis
+    def __init__(self):
+        pass
 
     def __call__(self, inputs):
         return sigmoid(inputs)

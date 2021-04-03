@@ -14,11 +14,14 @@ def relu_derivative(inputs):
 
 
 class Relu(Activation):
+    """
+        ReLu activation:
+            f(x) = x if x > 0 else 0
+            f'(x) = 1 if x > 0 else 0
+    """
 
-    def __init__(self, max_value=None, negative_slope=0, threshold=0):
-        self.max_value = max_value
-        self.negative_slope = negative_slope
-        self.threshold = threshold
+    def __init__(self):
+        pass
 
     def __call__(self, inputs):
         return relu(inputs)

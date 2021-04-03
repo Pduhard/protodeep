@@ -96,12 +96,12 @@ if __name__ == "__main__":
         epochs=500,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=10)]
+        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=3, baseline=0.029, restore_best_weights=True)]
     )
     print('fit1 ok')
-    modelreg.evaluate(
+    print(modelreg.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
-    )
+    ))
     print('eval ok ok')
 
     history_simple = model_simple.fit(

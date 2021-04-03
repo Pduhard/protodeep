@@ -2,35 +2,24 @@ from Protodeep.activations.Activation import Activation
 import numpy as np
 from numba import njit
 
-epsilon = 1e-8
 
-
-# @jit
-# @vectorize
-
-
-# @jit
-# def vtanh(x, xsum):
-#     return np.exp(x) / (xsum + epsilon)
-
-@njit
+@njit(fastmath=True)
 def tanh(inputs):
-    return 2 / (1 + np.exp(-2 * inputs)) - 1
-    # while (np.max(np.abs(inputs)) > 10):
-    #     inputs /= 2
-    # xsum = np.sum(np.exp(inputs))
-    # return np.array([np.exp(x) / (xsum + epsilon) for x in inputs])
-    # return (np.vectorize(vtanh)(inputs, xsum))
+    return 2. / (1. + np.exp(-2. * inputs)) - 1.
 
 
-@njit
+@njit(fastmath=True)
 def tanh_derivative(inputs):
-    activ = tanh(inputs)
+    activ = 2. / (1. + np.exp(-2. * inputs)) - 1.
     return 1 - activ * activ
 
 
 class Tanh(Activation):
-
+    """
+        Tanh activation:
+            f(x) = 2 / (1 + exp(-2x)) - 1
+            f'(x) = 1 - f(x)²
+    """
     def __init__(self):
         pass
 

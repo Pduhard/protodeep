@@ -1,13 +1,13 @@
 from Protodeep.activations.Activation import Activation
 import numpy as np
-# try:
-#     from numba import njit
-# except ImportError:
-#     def njit(func):
-#         return func
+
 
 class Linear(Activation):
-
+    """
+        Linear activation:
+            f(x) = x
+            f'(x) = 1
+    """
     def __init__(self):
         pass
 
