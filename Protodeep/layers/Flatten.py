@@ -16,11 +16,7 @@ class Flatten(Layer):
     # input_shape = None
 
     def __init__(self, data_format=None):
-        name = 'flatten'
-        if self.__class__.total_instance > 0:
-            name += '_' + str(self.__class__.total_instance)
-        super().__init__(trainable=False, name=name)
-        self.__class__.total_instance += 1
+        super().__init__(trainable=False, name='flatten')
         self.data_format = data_format
 
     def __call__(self, connectors):

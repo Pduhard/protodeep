@@ -1,15 +1,10 @@
 import numpy as np
-try:
-    from numba import njit, prange
-except ImportError:
-    def njit(func):
-        return func
-# import matplotlib.pyplot as plt
+from numba import njit, prange
 
 from Protodeep.layers.Layer import Layer
 from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
-from Protodeep.utils.error import _shape_error, _ndim_error
+from Protodeep.utils.error import _ndim_error
 
 
 @class_timer
@@ -165,11 +160,7 @@ class Conv2D(Layer):
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros', kernel_regularizer=None,
                  bias_regularizer=None, activity_regularizer=None):
-        name = 'conv2d'
-        if self.__class__.total_instance > 0:
-            name += '_' + str(self.__class__.total_instance)
-        super().__init__(trainable=True, name=name)
-        self.__class__.total_instance += 1
+        super().__init__(trainable=True, name='conv2d')
 
         self.weights = None
         self.w_grad = None

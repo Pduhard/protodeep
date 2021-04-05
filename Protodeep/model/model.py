@@ -16,25 +16,22 @@ class Model:
     from ._build import add, compile, build_graph, build
     from ._evaluate import evaluate
 
-    def __init__(self, options=None, inputs=None, outputs=None):
+    def __init__(self, inputs=None, outputs=None):
         self.layers = []
         self.weights = []
         self.gradients = []
         self.metrics = []
         self.optimizer = None
-        self.loss: callable = None
-        self.logs: dict = None
+        self.loss = None
+        self.logs = None
         self.val_set = False
         self.graph = {}
         self.flatten_graph = None
         self.linked = False
-        self.linear = True  # linearly connected layers
-        self.test_size = 0
-        self.train_size = 0
+        self.linear = True
         if inputs is not None and outputs is not None:
             self.linked = True
             self.build_graph(inputs, outputs)
-        self.options = options
 
     def backpropagate(self, dloss):
         for layer in self.flatten_graph[::-1]:
@@ -46,9 +43,7 @@ class Model:
                     inputs = np.array(next_l.dloss)
                 else:
                     inputs += next_l.dloss
-            grads, _ = layer.backward_pass(inputs)
-            # print(len(grads))
-            self.gradients.extend(grads)
+            layer.backward_pass(inputs)
 
     def predict(self, feature):
         if not isinstance(feature, list):
@@ -56,7 +51,7 @@ class Model:
         for layer in self.flatten_graph:
             if layer in self.inputs:
                 inputs = np.array(feature[self.inputs.index(layer)])
-            else:  # need to be a list in future version ?
+            else:
                 inputs = layer.input_connectors.layer.a_val
             layer.forward_pass(inputs)
         return [o.a_val for o in self.outputs]
@@ -113,109 +108,59 @@ class Model:
         for layer in self.layers:
             layer.reset_gradients()
 
-    def fit(self, features, targets, epochs, batch_size=32,
+    def fit_step(self, features, targets):
+        pred = self.predict(features)
+        dp_loss = []
+        loss = 0
+        for p, t in zip(pred, targets):
+            loss += self.loss(p, t)
+            dp_loss.append(self.loss.dr(p, t))
+        for metric in self.metrics:
+            metric.update_state(pred, targets)
+        self.backpropagate(dp_loss)
+        self.optimizer.apply_gradient(self.weights, self.gradients)
+        return loss
+
+    def fit(self, features, targets, epochs=10, batch_size=32,
             validation_data=None, callbacks=None):
 
-        # TODO check parameters and wrap in separate function
         features = cwrap_list(features)
         targets = cwrap_list(targets)
-        self.train_size = len(features[0])
         self.val_set = validation_data is not None
-
+        self.init_logs()
         if self.val_set:
             validation_data = wrap_tlist(validation_data)
-            self.test_size = len(validation_data[0][0])
-        else:
-            self.test_size = 0
-        # for l in self.flatten_graph:
-        #     l.init_gradients(batch_size)
         if callbacks is not None:
             for c in callbacks:
                 c.set_model(self)
                 c.on_fit_start()
-        self.init_logs()
         if batch_size > len(features[0]):
             batch_size = len(features[0])
         for e in range(epochs):
             for metric in self.metrics:
                 metric.reset_state()
             loss = 0
-            bfeatures, btargets, bacth_nb = self.get_mini_batchs(
+            bfeatures, btargets, steps = self.get_mini_batchs(
                 features,
                 targets,
                 batch_size
             )
-            # print(type(bfeatures))
-            # print(type(bfeatures[0]))
-            # print(type(bfeatures[0][0]))
-            # print(len(btargets[0]))
-            # print(btargets[0][0].shape)
-            # print(len(btargets))
-            # quit()
-            remaining_features = self.train_size
-            for s in range(bacth_nb):
-                # self.reset_gradients()
-                self.gradients = []
-                if remaining_features < batch_size:
-                    mini_batch_size = remaining_features
-                else:
-                    mini_batch_size = batch_size
-                remaining_features -= batch_size
-                # print('mini batch size', mini_batch_size)
-                feature = [bf[s] for bf in bfeatures]
-                target = [bt[s] for bt in btargets]
-                pred = self.predict(feature)
-                # print(pred)
-                # print(len(pred))
-    ## TODO
-                dp_loss = []
-                for p, t in zip(pred, target):
-                    # print(p, t)
-                    # if s == 0:
-                    #     print(p[0])
-                    #     print(t[0])
-                    loss += self.loss(p, t)
-                    # print(self.loss(p, t))
-                    dp_loss.append(self.loss.dr(p, t))
-                for metric in self.metrics:
-                    metric.update_state(pred, target)
-                self.backpropagate(dp_loss)
-                # print(loss)
-                # self.gradients
-
-    ##OLD VERSION
-                # for i in range(mini_batch_size):
-                #     feature = [bf[s][i] for bf in bfeatures]
-                #     target = [bt[s][i] for bt in btargets]
-                #     pred = self.predict(feature)
-                #     dp_loss = []
-                #     for p, t in zip(pred, target):
-                #         loss += self.loss(p, t)
-                #         dp_loss.append(self.loss.dr(p, t))
-                #     for metric in self.metrics:
-                #         metric.update_state(pred, target)
-                    # self.backpropagate(dp_loss)
-
-                # We need to do that in the backprop when matrix to tensor
-                # for g in self.gradients:
-                #     g /= batch_size
-                # ##########
-                self.optimizer.apply_gradient(self.weights, self.gradients)
-            loss /= bacth_nb
+            for s in range(steps):
+                loss += self.fit_step([bf[s] for bf in bfeatures], [bt[s] for bt in btargets])
+            loss /= steps
             self.update_metrics(loss)
             if validation_data is not None:
                 self.evaluate(validation_data)
             self.print_epoch_metrics(e, epochs)
             if callbacks is not None:
                 for callback in callbacks:
-                    if callback.on_epoch_end(logs=self.logs) is False:
+                    if callback.on_epoch_end(self.logs) is False:
                         return self.logs
         return self.logs
 
     def summary(self):
         rowsize = 65 if self.linear else 94
         print('_' * rowsize)
-        # print('_' * )
         print('{}{}{}{}\n{}'.format(
             'Layer (type)'.ljust(29),
             'Output Shape'.ljust(26),

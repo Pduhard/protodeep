@@ -45,11 +45,7 @@ class Input(Layer):
     # dloss = None
 
     def __init__(self, shape=None):
-        name = 'input'
-        if self.__class__.total_instance > 0:
-            name += '_' + str(self.__class__.total_instance)
-        super().__init__(trainable=False, name=name)
-        self.__class__.total_instance += 1
+        super().__init__(trainable=False, name='input')
         self.shape = shape
         self.output_shape = (
             self.shape

@@ -6,7 +6,6 @@ def evaluate(self, validation_data):
     loss = 0
     eval_logs = {}
     features, targets = wrap_tlist(validation_data)
-    test_size = len(features[0])
 
     for metric in self.metrics:
         metric.reset_state()

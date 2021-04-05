@@ -9,8 +9,6 @@ def add(self, layer):
 
 def build_graph(self, inputs, outputs):
 
-    #  need to verify if overidding is working well
-    #  but actually no layer take more than 1 input
     def get_next_level(graph, current_level, next_order, depth, way):
         next_level = []
         print(current_level)
@@ -98,7 +96,7 @@ def build_graph(self, inputs, outputs):
 def build(self):
     for layer in self.flatten_graph[::-1]:
         self.weights.extend(layer.get_trainable_weights())
-        # self.gradients.extend(layer.get_gradients())
+        self.gradients.extend(layer.get_gradients())
         # if layer.trainable is True:
         #     self.weights.append(layer.weights)
         #     self.gradients.append(layer.w_grad)

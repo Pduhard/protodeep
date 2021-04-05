@@ -118,11 +118,7 @@ class LSTM(Layer):
                  kernel_regularizer=None, recurrent_regularizer=None,
                  bias_regularizer=None, activity_regularizer=None,
                  return_sequences=False):
-        name = 'lstm'
-        if self.__class__.total_instance > 0:
-            name += '_' + str(self.__class__.total_instance)
-        super().__init__(trainable=True, name=name)
-        self.__class__.total_instance += 1
+        super().__init__(trainable=True, name='lstm')
 
         self.i_val = None
         self.dloss = None

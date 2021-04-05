@@ -4,10 +4,22 @@ import copy
 
 
 class EarlyStopping(CallBack):
+    """
+        Early Stopping callback
+
+        used to stop training when the monitored metrics does not show improvement over epochs
+
+        monitor: value to monitor
+        min_delta: minimal delta value considered as an improvement
+        patience: number of epochs before stop training when no improvement
+        baseline: minimal value to be reach before monitoring
+        restore_best_weight: restore the model's weight when True
+
+    """
 
     def __init__(self, monitor='val_loss', min_delta=0, patience=3,
                  baseline=None, restore_best_weights=False):
-        CallBack.__init__(self)
+        super().__init__()
         self.wait = 0
         self.monitor = monitor
         self.min_delta = min_delta

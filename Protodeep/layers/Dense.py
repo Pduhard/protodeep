@@ -1,37 +1,9 @@
 import numpy as np
-try:
-    from numba import njit
-except ImportError:
-    def njit(func):
-        return func
+from numba import njit
 
 from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
-# def parse_initializer(initializer):
-#     if isinstance(initializer, str) is False:
-#         return initializer
-#     initializer = initializer.lower()
-#     if initializer == "henormal":
-#         return HeNormal()
-#     elif initializer == "glorotnormal":
-#         return GlorotNormal()
-#     elif initializer == "randomnormal":
-#         return RandomNormal()
-#     else:
-#         return HeNormal()
-
-
-# def parse_activation(activation):
-#     if isinstance(activation, str) is False:
-#         return activation
-#     activation = activation.lower()
-#     if activation == "softmax":
-#         return Softmax()
-#     elif activation == "relu":
-#         return Relu()
-#     else:
-#         return Relu()  # !! linear
 
 # @njit
 # def dense_preactiv(inputs, weights, biases):
@@ -59,12 +31,7 @@ class Dense(Layer):
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros', kernel_regularizer=None,
                  bias_regularizer=None, activity_regularizer=None):
-        name = 'dense'
-        if self.__class__.total_instance > 0:
-            name += '_' + str(self.__class__.total_instance)
-        super().__init__(trainable=True, name=name)
-        self.__class__.total_instance += 1
-
+        super().__init__(trainable=True, name='dense')
         self.weights = None
         self.w_grad = None
 
@@ -106,14 +73,6 @@ class Dense(Layer):
         )
         return self.output_connectors
 
-    # def init_gradients(self, batch_size):
-    #     self.w_grad = np.empty(self.weights.shape)
-    #     self.b_grad = np.empty(self.biases.shape)
-    #     self.dloss = np.empty((batch_size, self.input_connectors.shape))
-        # self.w_grad.fill(0)
-        # self.b_grad.fill(0)
-        # self.dloss.fill(0)
-    
     def reset_gradients(self):
         self.w_grad.fill(0)
         if self.use_bias:
@@ -143,10 +102,10 @@ class Dense(Layer):
                 and derivative of loss with respect to input of this layer
         """
         # self.dloss = backward(self.w_grad, self.b_grad, inputs, self.activation.derivative(self.z_val), self.i_val, self.weights, inputs.shape[0])
-        
+
         if self.activity_regularizer:
             inputs = inputs + self.activity_regularizer.derivative(inputs)
-        
+
         self.reset_gradients()
         a_dp = self.activation.derivative(self.z_val)
         z_dp = (inputs * a_dp).T

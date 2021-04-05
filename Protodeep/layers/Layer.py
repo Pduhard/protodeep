@@ -6,10 +6,14 @@ class Layer:
     layer_dico = {}
 
     def __init__(self, trainable=True, name=None, dtype=None, dynamic=False):
-        
         self.input_connectors = None
         self.output_connectors = None
         self.trainable = trainable
+
+        if self.__class__.total_instance > 0:
+            name += '_' + str(self.__class__.total_instance)
+        self.__class__.total_instance += 1
+        
         self.name = name
         self.dtype = dtype
         self.dynamic = dynamic
