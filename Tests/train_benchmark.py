@@ -57,6 +57,18 @@ def get_basic_model():
     model.summary()
     return model
 
+def get_basic_model_RMSProp():
+    i = P.layers.Input(shape=(30))()
+    d1 = P.layers.Dense(64, activation=P.activations.Relu())(i)
+    d2 = P.layers.Dense(32, activation=P.activations.Relu())(d1)
+    out = P.layers.Dense(2, activation=P.activations.Softmax())(d2)
+
+    model = P.model.Model(inputs=i, outputs=out)
+
+    model.compile(30, metrics=[P.metrics.Accuracy()], optimizer=P.optimizers.Adam())
+    model.summary()
+    return model
+
 
 def get_troll_model_for_bonuses():
     model = P.model.Model()
@@ -69,7 +81,7 @@ def get_troll_model_for_bonuses():
     # model.add(P.layers.64, activation=P.activations.Relu())
     # model.add(P.layers.32, activation=P.activations.Relu())
     # model.add(P.layers.2, activation=P.activations.Softmax())
-    model.compile((5, 6, 1), metrics=[P.metrics.Accuracy()], optimizer=P.optimizers.Adam())
+    model.compile((5, 6, 1), metrics=[P.metrics.Accuracy()], optimizer=P.optimizers.RMSProp())
     model.summary()
     return model
 
@@ -82,6 +94,7 @@ if __name__ == "__main__":
     # model = get_troll_model_for_bonuses()
     modelreg = get_model_regularizers()
     model_simple = get_basic_model()
+    model_rms = get_basic_model_RMSProp()
 
     print(dataset.features.shape)
     print(dataset.test_features.shape)
@@ -96,13 +109,14 @@ if __name__ == "__main__":
         epochs=500,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=3, baseline=0.029, restore_best_weights=True)]
+        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=3, baseline=0.029, restore_best_weights=True)],
+        verbose=False
     )
-    print('fit1 ok')
+    print('model reg')
     print(modelreg.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
     ))
-    print('eval ok ok')
+    # print('eval ok ok')
 
     history_simple = model_simple.fit(
         features=dataset.features,
@@ -110,13 +124,33 @@ if __name__ == "__main__":
         epochs=500,
         batch_size=32,
         validation_data=(dataset.test_features, dataset.test_targets),
-        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=10)]
+        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=10)],
+        verbose=False
     )
-    model_simple.evaluate(
+    print('model simple')
+    print(model_simple.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
+    ))
+
+    history_rms = model_rms.fit(
+        features=dataset.features,
+        targets=dataset.targets,
+        epochs=500,
+        batch_size=32,
+        validation_data=(dataset.test_features, dataset.test_targets),
+        callbacks=[P.callbacks.EarlyStopping(monitor="val_loss", patience=10)],
+        verbose=True
     )
+    print('model rms')
+    print(model_rms.evaluate(
+        validation_data=(dataset.test_features, dataset.test_targets)
+    ))
     plt.plot(history_simple['accuracy'])
     plt.plot(history_simple['val_accuracy'])
+    plt.plot(history_reg['accuracy'])
+    plt.plot(history_reg['val_accuracy'])
+    plt.plot(history_rms['accuracy'])
+    plt.plot(history_rms['val_accuracy'])
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
@@ -124,25 +158,30 @@ if __name__ == "__main__":
 
     plt.plot(history_simple['loss'])
     plt.plot(history_simple['val_loss'])
+    plt.plot(history_reg['loss'])
+    plt.plot(history_reg['val_loss'])
+    plt.plot(history_rms['loss'])
+    plt.plot(history_rms['val_loss'])
+    
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
     # model.save_weights()
-    plt.plot(history_reg['accuracy'])
-    plt.plot(history_reg['val_accuracy'])
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.show()
+    # plt.plot(history_reg['accuracy'])
+    # plt.plot(history_reg['val_accuracy'])
+    # plt.ylabel('accuracy')
+    # plt.xlabel('epoch')
+    # plt.legend(['train', 'validation'], loc='upper left')
+    # plt.show()
 
 
-    plt.plot(history_reg['loss'])
-    plt.plot(history_reg['val_loss'])
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.show()
+    # plt.plot(history_reg['loss'])
+    # plt.plot(history_reg['val_loss'])
+    # plt.ylabel('loss')
+    # plt.xlabel('epoch')
+    # plt.legend(['train', 'validation'], loc='upper left')
+    # plt.show()
     # print("val_loss", val_loss)
     # e = np.array([1, 2, 3])
     # test(e)

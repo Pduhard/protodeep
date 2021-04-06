@@ -122,7 +122,7 @@ class Model:
         return loss
 
     def fit(self, features, targets, epochs=10, batch_size=32,
-            validation_data=None, callbacks=None):
+            validation_data=None, callbacks=None, verbose=True):
 
         features = cwrap_list(features)
         targets = cwrap_list(targets)
@@ -151,7 +151,8 @@ class Model:
             self.update_metrics(loss)
             if validation_data is not None:
                 self.evaluate(validation_data)
-            self.print_epoch_metrics(e, epochs)
+            if verbose:
+                self.print_epoch_metrics(e, epochs)
             if callbacks is not None:
                 for callback in callbacks:
                     if callback.on_epoch_end(self.logs) is False:

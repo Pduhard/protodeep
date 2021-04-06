@@ -2,6 +2,7 @@
 from Protodeep.initializers.HeNormal import HeNormal
 from Protodeep.initializers.GlorotNormal import GlorotNormal
 from Protodeep.initializers.RandomNormal import RandomNormal
+from Protodeep.initializers.GlorotUniform import GlorotUniform
 from Protodeep.initializers.Zeros import Zeros
 from Protodeep.activations.Relu import Relu
 from Protodeep.activations.Softmax import Softmax
@@ -43,6 +44,8 @@ def parse_initializer(initializer):
         return GlorotNormal()
     elif initializer == "randomnormal":
         return RandomNormal()
+    elif initializer == "glorotuniform":
+        return GlorotUniform()
     elif initializer == "zeros":
         return Zeros()
     else:
@@ -58,6 +61,8 @@ def parse_optimizer(optimizer):
     elif optimizer == "adagrad":
         return Adagrad()
     elif optimizer == "rmsprop":
+        # print('ahhh')
+        # quit()
         return RMSProp()
     elif optimizer == "adam":
         return Adam()

@@ -11,8 +11,6 @@ class Adagrad:
         
         self.acc = []
         self.apply_gradient = None
-
-
         self.apply_gradient = self.adagrad
 
     def add_weight(self, weight):

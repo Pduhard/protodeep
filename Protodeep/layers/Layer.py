@@ -46,8 +46,9 @@ class Layer:
 
     def get_gradients(self):
         return []
-    # def set_weights(self, weights):
-    #     return None
+
+    def set_weights(self, weights):
+        pass
 
     @classmethod
     def print_dico(self):

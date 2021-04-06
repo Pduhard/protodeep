@@ -52,8 +52,8 @@ class MaxPool2D(Layer):
     total_instance = 0
 
     def __init__(self, pool_size=(2, 2), strides=None,
-                 padding='valid', data_format=None):
-        super().__init__(trainable=False, name='maxpool2d')
+                 padding='valid', data_format=None, name='maxpool2d'):
+        super().__init__(trainable=False, name=name)
 
         self.b_mask = None
         self.z_val = None

@@ -4,12 +4,11 @@ import numpy as np
 class RMSProp:
 
     def __init__(self, learning_rate=0.001, rho=0.9,
-                 momentum=0.9, epsilon=1e-8, centered=False):
+                 momentum=0.0, epsilon=1e-8):
         self.learning_rate = learning_rate
         self.rho = rho
         self.momentum = momentum
         self.epsilon = epsilon
-        self.centered = centered
 
         self.acc = []
         self.velocity = []
@@ -28,21 +27,6 @@ class RMSProp:
     def compile(self, model):
         for weight in model.weights:
             self.add_weight(weight)
-    """
-        centered:
-            Boolean. If True, gradients are normalized
-            by the estimated variance of the gradient;
-            if False, by the uncentered second moment.
-            Setting this to True may help with training,
-            but is slightly more expensive
-            in terms of computation and memory.
-            Defaults to False.
-    """
-    def centered_rmsprop(self, model, batch_size):
-        NotImplemented
-
-    def centered_momentum_rmsprop(self, model, batch_size):
-        NotImplemented
 
     def momentum_rmsprop(self, weights, gradients):
         rho = self.rho
@@ -62,3 +46,11 @@ class RMSProp:
         for i, (weight, gradient) in enumerate(zip(weights, gradients)):
             self.acc[i] = rho * self.acc[i] + (1 - rho) * gradient ** 2
             weight -= lr * gradient / np.sqrt(self.acc[i] + e)
+
+    def __str__(self):
+        return 'RMSProp:\n\t\
+            learning rate= {}\t\
+            momentum= {}\t\
+            rho= {}'.format(self.learning_rate,
+                                 self.momentum,
+                                 self.rho)

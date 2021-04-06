@@ -55,54 +55,56 @@ def conv_no_bias(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, inputs):
 #                                 z_val[n, h // SH, w // SW, f] += inputs[n, h + kh, w + kw, c] * weights[kh, kw, c, f]
 
 
-@class_timer
-@njit(parallel=True, fastmath=True)
-def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
-    for n in prange(N):
-        for h in range(H):
-            for w in range(W):
-                for c in range(C):
-                    for kh in range(KH):
-                        for kw in range(KW):
-                            for f in range(F):
-                                b_grad[f] += a_dp[n, kh, kw, f] / N
-                                w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f] / N
-
-@class_timer
-@njit(parallel=True, fastmath=True)
-def conv_derivative_no_bias(w_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
-    for n in prange(N):
-        for h in range(H):
-            for w in range(W):
-                for c in range(C):
-                    for kh in range(KH):
-                        for kw in range(KW):
-                            for f in range(F):
-                                w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f] / N
-
-
 # slower 
-
 # @class_timer
 # @njit(parallel=True, fastmath=True)
 # def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
 #     for n in prange(N):
-#         for h in range(0, H):
-#             for w in range(0, W):
+#         for h in range(H):
+#             for w in range(W):
 #                 for c in range(C):
-#                     for f in range(F):
-#                         b_grad[f] += np.sum(a_dp[n, :, :, f]) / N
-#                         w_grad[h, w, c, f] += np.sum(i_val[n, h:h+KH, w:w+KW, c] * a_dp[n, :, :, f]) / N
+#                     for kh in range(KH):
+#                         for kw in range(KW):
+#                             for f in range(F):
+#                                 b_grad[f] += a_dp[n, kh, kw, f] / N
+#                                 w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f] / N
 
 # @class_timer
 # @njit(parallel=True, fastmath=True)
 # def conv_derivative_no_bias(w_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
 #     for n in prange(N):
-#         for h in range(0, H):
-#             for w in range(0, W):
+#         for h in range(H):
+#             for w in range(W):
 #                 for c in range(C):
-#                     for f in range(F):
-#                         w_grad[h, w, c, f] += np.sum(i_val[n, h:h+KH, w:w+KW, c] * a_dp[n, :, :, f]) / N
+#                     for kh in range(KH):
+#                         for kw in range(KW):
+#                             for f in range(F):
+#                                 w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f] / N
+
+
+
+@class_timer
+@njit(parallel=True, fastmath=True)
+def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
+    for n in prange(N):
+        for h in range(0, H):
+            for w in range(0, W):
+                for c in range(C):
+                    for f in range(F):
+                        b_grad[f] += np.sum(a_dp[n, :, :, f]) / N
+                        w_grad[h, w, c, f] += np.sum(i_val[n, h:h+KH, w:w+KW, c] * a_dp[n, :, :, f]) / N
+
+
+@class_timer
+@njit(parallel=True, fastmath=True)
+def conv_derivative_no_bias(w_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
+    for n in prange(N):
+        for h in range(0, H):
+            for w in range(0, W):
+                for c in range(C):
+                    for f in range(F):
+                        w_grad[h, w, c, f] += np.sum(i_val[n, h:h+KH, w:w+KW, c] * a_dp[n, :, :, f]) / N
+
 
 @class_timer
 @njit(parallel=True, fastmath=True)
@@ -114,7 +116,8 @@ def conv_xgrad(x_grad, N, H, W, F, C, KH, KW, pad_a_dp, weights):
                     for kh in range(KH):
                         for kw in range(KW):
                             for c in range(C):
-                                x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, f] * weights[kh, kw, c, f]  # 180 rotated
+                                x_grad[n, h, w, c] += pad_a_dp[n, h + kh, w + kw, f] * weights[kh, kw, c, f]
+
 
 @class_timer
 @njit(parallel=True, fastmath=True)
@@ -127,16 +130,6 @@ def dilate(arr, SH, SW):
                 for c in range(C):
                     dilated[n, h * SH, w * SW, c] = arr[n, h, w, c]
     return dilated
-
-
-@class_timer
-@njit(parallel=True, fastmath=True)
-def rotate_180(arr, H, W):
-    rotated = np.empty(arr.shape)
-    for i in prange(H):
-        for j in range(W):
-            rotated[i, W-1-j] = arr[H-1-i, j]
-    return rotated
 
 
 def conv_pad(arr, ishape, fshape):
@@ -157,10 +150,10 @@ class Conv2D(Layer):
 
     def __init__(self, filters, kernel_size, strides=(1, 1),
                  activation=None, use_bias=True,
-                 kernel_initializer='glorot_uniform',
+                 kernel_initializer='glorot_normal',
                  bias_initializer='zeros', kernel_regularizer=None,
-                 bias_regularizer=None, activity_regularizer=None):
-        super().__init__(trainable=True, name='conv2d')
+                 bias_regularizer=None, activity_regularizer=None, name='conv2d'):
+        super().__init__(trainable=True, name=name)
 
         self.weights = None
         self.w_grad = None
@@ -201,7 +194,7 @@ class Conv2D(Layer):
         if self.use_bias:
             self.biases = self.bias_initializer(self.filters)
             self.b_grad = np.zeros(self.filters)
-        
+
         self.output_shape = (
             int((h - kh) / sh + 1),
             int((w - kw) / sw + 1),
@@ -290,3 +283,10 @@ class Conv2D(Layer):
 
     def get_gradients(self):
         return [self.w_grad, self.b_grad] if self.use_bias else [self.w_grad]
+
+    def set_weights(self, weights):
+        if len(weights) != len(self.get_trainable_weights()):
+            print('invalid weights list conv2d')
+        self.weights = weights[0]
+        if self.use_bias:
+            self.biases = weights[1]

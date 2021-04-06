@@ -30,8 +30,8 @@ class Dense(Layer):
     def __init__(self, units, activation=None, use_bias=True,
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros', kernel_regularizer=None,
-                 bias_regularizer=None, activity_regularizer=None):
-        super().__init__(trainable=True, name='dense')
+                 bias_regularizer=None, activity_regularizer=None, name='dense'):
+        super().__init__(trainable=True, name=name)
         self.weights = None
         self.w_grad = None
 
@@ -126,7 +126,8 @@ class Dense(Layer):
         return [self.w_grad, self.b_grad] if self.use_bias else [self.w_grad]
     
     def set_weights(self, weights):
-        if len(weights) != 2:
-            print('chelouuuu set weights dans dense')
+        if len(weights) != len(self.get_trainable_weights()):
+            print('invalid weights list dense')
         self.weights = weights[0]
-        self.biases = weights[1]
+        if self.use_bias:
+            self.biases = weights[1]

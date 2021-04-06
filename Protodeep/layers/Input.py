@@ -44,8 +44,8 @@ class Input(Layer):
     # i_val = None
     # dloss = None
 
-    def __init__(self, shape=None):
-        super().__init__(trainable=False, name='input')
+    def __init__(self, shape=None, name='input'):
+        super().__init__(trainable=False, name=name)
         self.shape = shape
         self.output_shape = (
             self.shape

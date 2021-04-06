@@ -102,14 +102,6 @@ class LSTM(Layer):
 
     """
     total_instance = 0
-    # weights = None
-    # w_grad = None
-
-    # biases = None
-    # b_grad = None
-
-    # a_val = None
-    # z_val = None
 
     def __init__(self, units, activation='tanh', recurrent_activation='sigmoid',
                  use_bias=True, kernel_initializer='glorot_uniform',
@@ -117,8 +109,8 @@ class LSTM(Layer):
                  bias_initializer='zeros', unit_forget_bias=True,
                  kernel_regularizer=None, recurrent_regularizer=None,
                  bias_regularizer=None, activity_regularizer=None,
-                 return_sequences=False):
-        super().__init__(trainable=True, name='lstm')
+                 return_sequences=False, name='lstm'):
+        super().__init__(trainable=True, name=name)
 
         self.i_val = None
         self.dloss = None
@@ -418,9 +410,18 @@ class LSTM(Layer):
         ]
 
     def set_weights(self, weights):
-        print('set weight not implemented LSTM')
-        quit()
-        if len(weights) != 2:
-            print('chelouuuu set weights dans LSTM')
-        self.weights = weights[0]
-        self.biases = weights[1]
+        if len(weights) != len(self.get_trainable_weights()):
+            print('invalid weights list lstm')
+        self.wf = weights[0]
+        self.wi = weights[1]
+        self.wo = weights[2]
+        self.wc = weights[3]
+        self.hwf = weights[4]
+        self.hwi = weights[5]
+        self.hwo = weights[6]
+        self.hwc = weights[7]
+        if self.use_bias:
+            self.bf = weights[8]
+            self.bi = weights[9]
+            self.bo = weights[10]
+            self.bc = weights[11]

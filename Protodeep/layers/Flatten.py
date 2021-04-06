@@ -15,8 +15,8 @@ class Flatten(Layer):
 
     # input_shape = None
 
-    def __init__(self, data_format=None):
-        super().__init__(trainable=False, name='flatten')
+    def __init__(self, data_format=None, name='flatten'):
+        super().__init__(trainable=False, name=name)
         self.data_format = data_format
 
     def __call__(self, connectors):
