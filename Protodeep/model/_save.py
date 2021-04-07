@@ -6,7 +6,7 @@ def save_weights(self, file_name='model_weights.json'):
     with open(file_name, 'w+') as outfile:
         dc = {
             layer.name: [
-                weight.tolist() for weight in layer.get_weights()
+                weight.tolist() for weight in layer.get_trainable_weights()
             ] for layer in self.flatten_graph if layer.trainable
         }
         json.dump(dc, outfile)
