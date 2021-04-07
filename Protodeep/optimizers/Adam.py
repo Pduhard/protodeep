@@ -23,7 +23,7 @@ class Adam:
 
         self.apply_gradient = None
         self.t = 1
-        
+
         if self.amsgrad:
             self.apply_gradient = self.amsgrad_adam
         else:
@@ -59,7 +59,6 @@ class Adam:
             weight -= lr * m_at / (np.sqrt(self.v_at[i]) + e)
         self.t += 1
 
-    # @jit
     def adam(self, weights, gradients):
         beta_1 = self.beta_1
         beta_2 = self.beta_2
@@ -70,6 +69,5 @@ class Adam:
             self.v[i] = beta_2 * self.v[i] + (1 - beta_2) * gradient ** 2
             m_at = self.m[i] / (1 - (beta_1 ** self.t))
             v_at = self.v[i] / (1 - (beta_2 ** self.t))
-            # weight -= test(self.learning_rate, v_at, epsilon, m_at) == pas fou
             weight -= lr * m_at / (np.sqrt(v_at) + e)
         self.t += 1

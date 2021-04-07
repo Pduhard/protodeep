@@ -5,46 +5,11 @@ except ImportError:
     def njit(func):
         return func
 
-from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
+from Protodeep.utils.parse import parse_activation
+from Protodeep.utils.parse import parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
-# def parse_initializer(initializer):
-#     if isinstance(initializer, str) is False:
-#         return initializer
-#     initializer = initializer.lower()
-#     if initializer == "henormal":
-#         return HeNormal()
-#     elif initializer == "glorotnormal":
-#         return GlorotNormal()
-#     elif initializer == "randomnormal":
-#         return RandomNormal()
-#     else:
-#         return HeNormal()
 
-
-# def parse_activation(activation):
-#     if isinstance(activation, str) is False:
-#         return activation
-#     activation = activation.lower()
-#     if activation == "softmax":
-#         return Softmax()
-#     elif activation == "relu":
-#         return Relu()
-#     else:
-#         return Relu()  # !! linear
-
-# @njit
-# def dense_preactiv(inputs, weights, biases):
-#     return np.dot(inputs, weights) + biases
-
-# @njit
-# def backward(w_grad, b_grad, inputs, a_dp, i_val, weights, batch_size):
-#     w_grad.fill(0)
-#     b_grad.fill(0)
-#     z_dp = (inputs * a_dp).T
-#     w_grad += np.matmul(z_dp, i_val).T / batch_size
-#     b_grad += np.mean(z_dp, axis=-1)
-#     return np.matmul(weights, z_dp).T
 
 @class_timer
 class LSTM(Layer):
@@ -62,7 +27,7 @@ class LSTM(Layer):
             hwi = hidden weights for input gate
             hwo = hidden weights for output gate
             hwc = hidden weights for candidate gate
-            
+
             bf = biases for forget gate
             bi = biases for input gate
             bo = biases for output gate
@@ -78,12 +43,12 @@ class LSTM(Layer):
             hwi_g = gradient of hidden weights for input gate
             hwo_g = gradient of hidden weights for output gate
             hwc_g = gradient of hidden weights for candidate gate
-            
+
             bf_g = gradient of biases for forget gate
             bi_g = gradient of biases for input gate
             bo_g = gradient of biases for output gate
             bc_g = gradient of biases for candidate gate
-            
+
             hs = hidden state
             cs = cell state
 
@@ -103,8 +68,9 @@ class LSTM(Layer):
     """
     total_instance = 0
 
-    def __init__(self, units, activation='tanh', recurrent_activation='sigmoid',
-                 use_bias=True, kernel_initializer='glorot_uniform',
+    def __init__(self, units, activation='tanh',
+                 recurrent_activation='sigmoid', use_bias=True,
+                 kernel_initializer='glorot_uniform',
                  recurrent_initializer='glorot_uniform',
                  bias_initializer='zeros', unit_forget_bias=True,
                  kernel_regularizer=None, recurrent_regularizer=None,
@@ -114,7 +80,7 @@ class LSTM(Layer):
 
         self.i_val = None
         self.dloss = None
-        
+
         self.units = units
         self.activation = parse_activation(activation)
         self.recurrent_activation = parse_activation(recurrent_activation)
@@ -156,7 +122,7 @@ class LSTM(Layer):
         self.hwi = self.recurrent_initializer(hidden_weight_shape)
         self.hwo = self.recurrent_initializer(hidden_weight_shape)
         self.hwc = self.kernel_initializer(hidden_weight_shape)
-        
+
         self.wf_g = np.zeros(weight_shape)
         self.wi_g = np.zeros(weight_shape)
         self.wo_g = np.zeros(weight_shape)
@@ -166,7 +132,7 @@ class LSTM(Layer):
         self.hwi_g = np.zeros(hidden_weight_shape)
         self.hwo_h = np.zeros(hidden_weight_shape)
         self.hwc_g = np.zeros(hidden_weight_shape)
-    
+
         if self.use_bias:
             self.bf = self.bias_initializer(self.units)
             self.bi = self.bias_initializer(self.units)
@@ -174,14 +140,11 @@ class LSTM(Layer):
             self.bc = self.bias_initializer(self.units)
             if self.unit_forget_bias:
                 self.bf += 1
-        # self.weights = self.kernel_initializer(weight_shape)
 
             self.bf_g = np.zeros(self.units)
             self.bi_g = np.zeros(self.units)
             self.bo_g = np.zeros(self.units)
             self.bc_g = np.zeros(self.units)
-        # self.biases = self.bias_initializer(self.units)
-        # self.b_grad = np.zeros(self.units)
 
         self.input_connectors = connectors
 
@@ -195,7 +158,6 @@ class LSTM(Layer):
         )
         return self.output_connectors
 
-    
     def reset_gradients(self):
         self.dloss = np.zeros(shape=(self.i_val.shape))
         self.wf_g.fill(0)
@@ -230,7 +192,7 @@ class LSTM(Layer):
         self.out_val = np.zeros(shape=(batch_size, timestep, self.units))
 
     def regularize(self):
-        
+
         if self.kernel_regularizer:
             self.wc_g += self.kernel_regularizer.derivative(self.wc)
             self.hwc_g += self.kernel_regularizer.derivative(self.hwc)
@@ -242,43 +204,94 @@ class LSTM(Layer):
             self.hwf_g += self.recurrent_regularizer.derivative(self.hwf)
             self.hwi_g += self.recurrent_regularizer.derivative(self.hwi)
             self.hwo_g += self.recurrent_regularizer.derivative(self.hwo)
-            # self.w_grad += self.recurrent_regularizer.derivative(self.weights)
-        
+
         if self.use_bias and self.bias_regularizer:
             self.bf_g += self.bias_regularizer.derivative(self.bf)
             self.bi_g += self.bias_regularizer.derivative(self.bi)
             self.bo_g += self.bias_regularizer.derivative(self.bo)
             self.bc_g += self.bias_regularizer.derivative(self.bc)
 
-    def forward_pass(self, inputs):
+    def cell_forward_pass(self, b, i, x):
+        j = (b, i - 1)
+        i = (b, i)
+        if self.use_bias:
+            self.zf[i] += x @ self.wf + self.hs[j] @ self.hwf + self.bf
+            self.zi[i] += x @ self.wi + self.hs[j] @ self.hwi + self.bi
+            self.zo[i] += x @ self.wo + self.hs[j] @ self.hwo + self.bo
+            self.zc[i] += x @ self.wc + self.hs[j] @ self.hwc + self.bc
+        else:
+            self.zf[i] += x @ self.wf + self.hs[j] @ self.hwf
+            self.zi[i] += x @ self.wi + self.hs[j] @ self.hwi
+            self.zo[i] += x @ self.wo + self.hs[j] @ self.hwo
+            self.zc[i] += x @ self.wc + self.hs[j] @ self.hwc
 
+        self.af[i] += self.recurrent_activation(self.zf[i])
+        self.ai[i] += self.recurrent_activation(self.zi[i])
+        self.ao[i] += self.recurrent_activation(self.zo[i])
+        self.ac[i] += self.activation(self.zc[i])
+
+        self.cs[i] += self.cs[j] * self.af[i] + self.ai[i] * self.ac[i]
+        self.hs[i] += self.activation(self.cs[i]) * self.ao[i]
+        self.out_val[j] += self.activation(self.cs[i]) * self.ao[i]
+
+    def cell_backward_pass(self, dly, dlcsnext, b, i, batch_size, inpt):
+
+        rad = self.recurrent_activation.derivative
+        ad = self.activation.derivative
+
+        index = i
+        p = (b, i - 1)
+        i = (b, i)
+        dlcs = dly * self.ao[i] * ad(self.cs[i])
+
+        # derivative of loss with respect to gates output
+        dlzf = self.cs[p] * dlcsnext + dlcs * self.cs[p] * rad(self.zf[i])
+        dlzi = self.ac[i] * dlcsnext + dlcs * self.ac[i] * rad(self.zi[i])
+        dlzc = self.ai[i] * dlcsnext + dlcs * self.ai[i] * ad(self.zc[i])
+        dlzo = dly * self.activation(self.cs[i]) * rad(self.zo[i])
+
+        # derivative of loss with respect to weights
+        self.wf_g += np.outer(dlzf, self.i_val[p]).T / batch_size
+        self.wi_g += np.outer(dlzi, self.i_val[p]).T / batch_size
+        self.wc_g += np.outer(dlzc, self.i_val[p]).T / batch_size
+        self.wo_g += np.outer(dlzo, self.i_val[p]).T / batch_size
+
+        # derivative of loss with respect to hidden weights
+        self.hwf_g += np.outer(dlzf, self.hs[p]).T / batch_size
+        self.hwi_g += np.outer(dlzi, self.hs[p]).T / batch_size
+        self.hwc_g += np.outer(dlzc, self.hs[p]).T / batch_size
+        self.hwo_h += np.outer(dlzo, self.hs[p]).T / batch_size
+
+        # derivative of loss with respect to biases
+        if self.use_bias:
+            self.bf_g += dlzf / batch_size
+            self.bi_g += dlzi / batch_size
+            self.bc_g += dlzc / batch_size
+            self.bo_g += dlzo / batch_size
+
+        # derivative of loss with respect to input of cell
+        self.dloss[p] += (self.wf @ dlzf + self.wi @ dlzi +
+                          self.wc @ dlzc + self.wo @ dlzo).T
+
+        # derivative of loss with respect to hidden input of previous cell
+        dly = (self.hwf @ dlzf + self.hwi @ dlzi +
+               self.hwc @ dlzc + self.hwo @ dlzo).T
+        if self.return_sequences and index > 1:
+            dly += inpt[index - 2]
+        dlcsnext = dlcsnext * self.af[i] + dlcs * self.af[i]
+        return dly, dlcsnext
+
+    def forward_pass(self, inputs):
         self.i_val = inputs
         batch_size, timestep, _ = inputs.shape
         self._init_cache(batch_size, timestep)
         for b, inpt in enumerate(inputs):
             for i, x in enumerate(inpt, start=1):
-
-                if self.use_bias:
-                    self.zf[b, i] += x @ self.wf + self.hs[b, i - 1] @ self.hwf + self.bf
-                    self.zi[b, i] += x @ self.wi + self.hs[b, i - 1] @ self.hwi + self.bi
-                    self.zo[b, i] += x @ self.wo + self.hs[b, i - 1] @ self.hwo + self.bo
-                    self.zc[b, i] += x @ self.wc + self.hs[b, i - 1] @ self.hwc + self.bc
-                else:
-                    self.zf[b, i] += x @ self.wf + self.hs[b, i - 1] @ self.hwf
-                    self.zi[b, i] += x @ self.wi + self.hs[b, i - 1] @ self.hwi
-                    self.zo[b, i] += x @ self.wo + self.hs[b, i - 1] @ self.hwo
-                    self.zc[b, i] += x @ self.wc + self.hs[b, i - 1] @ self.hwc
-
-                self.af[b, i] += self.recurrent_activation(self.zf[b, i])
-                self.ai[b, i] += self.recurrent_activation(self.zi[b, i])
-                self.ao[b, i] += self.recurrent_activation(self.zo[b, i])
-                self.ac[b, i] += self.activation(self.zc[b, i])
-
-                self.cs[b, i] += self.cs[b, i - 1] * self.af[b, i] + self.ai[b, i] * self.ac[b, i]
-                self.hs[b, i] += self.activation(self.cs[b, i]) * self.ao[b, i]
-                self.out_val[b, i - 1] += self.activation(self.cs[b, i]) * self.ao[b, i]
-
-        self.a_val = self.out_val if self.return_sequences else self.out_val[:, -1, :]
+                self.cell_forward_pass(b, i, x)
+        if self.return_sequences:
+            self.a_val = self.out_val
+        else:
+            self.a_val = self.out_val[:, -1, :]
         return self.a_val
 
     def backward_pass(self, inputs):
@@ -292,72 +305,19 @@ class LSTM(Layer):
         batch_size, timesteps, _ = self.i_val.shape
         self.reset_gradients()
 
-        rad = self.recurrent_activation.derivative
-        ad = self.activation.derivative
-        
         if self.activity_regularizer:
             inputs = inputs + self.activity_regularizer(inputs)
-        # print(inputs.shape)
         for b, inpt in enumerate(inputs):
-            # print(inpt.shape)
             dly = inpt[-1, :] if self.return_sequences else inpt
             dlcsnext = 0
-
             for i in range(timesteps, 0, -1):
-
-                # derivative of loss with respect to cell state 
-                dlcs = dly * self.ao[b, i] * ad(self.cs[b, i])
-
-
-                # i think the true fomrula is here :
-                # dlzf = self.cs[b, i - 1] * dlcsnext * rad(self.zf[b, i]) + dlcs * self.cs[b, i - 1] * rad(self.zf[b, i])
-                # dlzi = self.ac[b, i] * dlcsnext * rad(self.zi[b, i]) + dlcs * self.ac[b, i] * rad(self.zi[b, i])
-                # dlzc = self.ai[b, i] * dlcsnext * ad(self.zc[b, i]) + dlcs * self.ai[b, i] * ad(self.zc[b, i])
-                # dlzo = dly * self.activation(self.cs[b, i]) * rad(self.zo[b, i])
-
-                # derivative of loss with respect to gates output
-                dlzf = self.cs[b, i - 1] * dlcsnext + dlcs * self.cs[b, i - 1] * rad(self.zf[b, i])
-                dlzi = self.ac[b, i] * dlcsnext + dlcs * self.ac[b, i] * rad(self.zi[b, i])
-                dlzc = self.ai[b, i] * dlcsnext + dlcs * self.ai[b, i] * ad(self.zc[b, i])
-                dlzo = dly * self.activation(self.cs[b, i]) * rad(self.zo[b, i])
-
-                # derivative of loss with respect to weights
-                self.wf_g += np.outer(dlzf, self.i_val[b, i - 1]).T / batch_size
-                self.wi_g += np.outer(dlzi, self.i_val[b, i - 1]).T / batch_size
-                self.wc_g += np.outer(dlzc, self.i_val[b, i - 1]).T / batch_size
-                self.wo_g += np.outer(dlzo, self.i_val[b, i - 1]).T / batch_size
-
-                # derivative of loss with respect to hidden weights
-                self.hwf_g += np.outer(dlzf, self.hs[b, i - 1]).T / batch_size
-                self.hwi_g += np.outer(dlzi, self.hs[b, i - 1]).T / batch_size
-                self.hwc_g += np.outer(dlzc, self.hs[b, i - 1]).T / batch_size
-                self.hwo_h += np.outer(dlzo, self.hs[b, i - 1]).T / batch_size
-
-                # derivative of loss with respect to biases
-                if self.use_bias:
-                    self.bf_g += dlzf / batch_size
-                    self.bi_g += dlzi / batch_size
-                    self.bc_g += dlzc / batch_size
-                    self.bo_g += dlzo / batch_size
-
-                # derivative of loss with respect to input of cell
-                self.dloss[b, i - 1] += (self.wf @ dlzf + self.wi @ dlzi + self.wc @ dlzc + self.wo @ dlzo).T
-                # self.dloss[b, i - 1] += 
-
-                # derivative of loss with respect to hidden input of previous cell
-                dly = (self.hwf @ dlzf + self.hwi @ dlzi + self.hwc @ dlzc + self.hwo @ dlzo).T
-                if self.return_sequences and i > 1:
-                    dly += inpt[i - 2]
-
-                # derivative of loss with respect to implication of cell state in next cell
-                dlcsnext = dlcsnext * self.af[b, i] + dlcs * self.af[b, i]
-                # print('ok')
-                # quit()
+                # derivative of loss with respect to cell state
+                dly, dlcsnext = self.cell_backward_pass(
+                    dly, dlcsnext, b, i, batch_size, inpt)
 
         self.regularize()
-        
+
         return self.get_gradients(), self.dloss
-        
 
     def get_trainable_weights(self):
         return [

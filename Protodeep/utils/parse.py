@@ -15,6 +15,8 @@ from Protodeep.optimizers.RMSProp import RMSProp
 from Protodeep.optimizers.Adadelta import Adadelta
 from Protodeep.optimizers.Adam import Adam
 from Protodeep.metrics.Accuracy import Accuracy
+from Protodeep.metrics.CategoricalAccuracy import CategoricalAccuracy
+from Protodeep.metrics.BinaryAccuracy import BinaryAccuracy
 from Protodeep.losses.BinaryCrossentropy import BinaryCrossentropy
 from Protodeep.losses.MeanSquaredError import MeanSquaredError
 from Protodeep.regularizers.L1 import L1
@@ -31,6 +33,10 @@ def parse_metrics(metrics):
             metric = metric.lower().replace('_', '')
             if metric == "accuracy":
                 res.append(Accuracy())
+            elif metric == "categoricalaccuracy":
+                res.append(CategoricalAccuracy())
+            elif metric == "binaryaccuracy":
+                res.append(BinaryAccuracy())
     return res
 
 
@@ -61,8 +67,6 @@ def parse_optimizer(optimizer):
     elif optimizer == "adagrad":
         return Adagrad()
     elif optimizer == "rmsprop":
-        # print('ahhh')
-        # quit()
         return RMSProp()
     elif optimizer == "adam":
         return Adam()
@@ -84,20 +88,6 @@ def parse_loss(loss):
         return BinaryCrossentropy()
 
 
-# def parse_initializer(initializer):
-#     if isinstance(initializer, str) is False:
-#         return initializer
-#     initializer = initializer.lower()
-#     if initializer == "henormal":
-#         return HeNormal()
-#     elif initializer == "glorotnormal":
-#         return GlorotNormal()
-#     elif initializer == "randomnormal":
-#         return RandomNormal()
-#     else:
-#         return HeNormal()
-
-
 def parse_activation(activation):
     if isinstance(activation, str) is False:
         return activation or Linear()
@@ -115,7 +105,7 @@ def parse_activation(activation):
     else:
         return Linear()  # !! linear
 
-        
+
 def parse_regularizer(regularizer):
     if isinstance(regularizer, str) is False:
         return regularizer or None

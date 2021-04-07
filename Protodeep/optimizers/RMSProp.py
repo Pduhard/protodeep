@@ -52,5 +52,5 @@ class RMSProp:
             learning rate= {}\t\
             momentum= {}\t\
             rho= {}'.format(self.learning_rate,
-                                 self.momentum,
-                                 self.rho)
+                            self.momentum,
+                            self.rho)

@@ -8,7 +8,8 @@ class L1L2():
         self.l2 = l2
 
     def __call__(self, inputs):
-        return self.l1 * np.sum(np.abs(inputs)) + self.l2 * np.sum(np.square(inputs))
+        i = inputs
+        return self.l1 * np.sum(np.abs(i)) + self.l2 * np.sum(i * i)
 
     def derivative(self, inputs):
         return self.l1 * np.where(inputs < 0, -1., 1.) + self.l2 * inputs * 2.

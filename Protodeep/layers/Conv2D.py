@@ -2,7 +2,8 @@ import numpy as np
 from numba import njit, prange
 
 from Protodeep.layers.Layer import Layer
-from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
+from Protodeep.utils.parse import parse_activation
+from Protodeep.utils.parse import parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.utils.error import _ndim_error
 
@@ -55,7 +56,7 @@ def conv_no_bias(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, inputs):
 #                                 z_val[n, h // SH, w // SW, f] += inputs[n, h + kh, w + kw, c] * weights[kh, kw, c, f]
 
 
-# slower 
+# slower
 # @class_timer
 # @njit(parallel=True, fastmath=True)
 # def conv_derivative(w_grad, b_grad, N, H, W, F, C, KH, KW, a_dp, i_val):
@@ -80,7 +81,6 @@ def conv_no_bias(z_val, N, H, W, F, C, KH, KW, SH, SW, weights, inputs):
 #                         for kw in range(KW):
 #                             for f in range(F):
 #                                 w_grad[h, w, c, f] += i_val[n, kh + h, kw + w, c] * a_dp[n, kh, kw, f] / N
-
 
 
 @class_timer
@@ -143,6 +143,7 @@ def conv_pad(arr, ishape, fshape):
     )
     return np.pad(arr, padding, 'constant')
 
+
 @class_timer
 class Conv2D(Layer):
 
@@ -152,7 +153,8 @@ class Conv2D(Layer):
                  activation=None, use_bias=True,
                  kernel_initializer='glorot_normal',
                  bias_initializer='zeros', kernel_regularizer=None,
-                 bias_regularizer=None, activity_regularizer=None, name='conv2d'):
+                 bias_regularizer=None, activity_regularizer=None,
+                 name='conv2d'):
         super().__init__(trainable=True, name=name)
 
         self.weights = None
@@ -226,7 +228,7 @@ class Conv2D(Layer):
 
         # if inputs.shape[1:] != self.input_connectors.shape:
         #     _shape_error(self.input_connectors.shape, inputs.shape[1:])
-        
+
         N, H, W, C = inputs.shape
         SH, SW = self.strides
         KH, KW = self.kernel_size
@@ -265,15 +267,18 @@ class Conv2D(Layer):
         N, KH, KW, _ = a_dp.shape
 
         if self.use_bias:
-            conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
+            conv_derivative(self.w_grad, self.b_grad, N, H, W, F, C,
+                            KH, KW, a_dp, self.i_val)
         else:
-            conv_derivative_no_bias(self.w_grad, N, H, W, F, C, KH, KW, a_dp, self.i_val)
+            conv_derivative_no_bias(self.w_grad, N, H, W, F, C,
+                                    KH, KW, a_dp, self.i_val)
 
         # convolution of padded a_dp by 180 rotated weights
         pad_a_dp = conv_pad(a_dp, self.dloss.shape, a_dp.shape)
         N, H, W, _ = pad_a_dp.shape
         KH, KW = self.kernel_size
-        conv_xgrad(self.dloss, N, H, W, F, C, KH, KW, pad_a_dp, self.weights[::-1, ::-1, ...])
+        conv_xgrad(self.dloss, N, H, W, F, C, KH, KW,
+                   pad_a_dp, self.weights[::-1, ::-1, ...])
 
         self.regularize()
         return self.get_gradients(), self.dloss

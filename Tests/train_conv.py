@@ -147,7 +147,7 @@ def get_light_config():
     # model.add(32, activation="relu")
     # model.add(2, activation="softmax")
     # model.compile((28, 28, 1), metrics=["accuracy"], optimizer=SGD(momentum=0.9))
-    model.compile((28, 28, 1), metrics=["accuracy"], optimizer='Adam')
+    model.compile((28, 28, 1), metrics=["categorical_accuracy"], optimizer='Adam')
     model.summary()
     return model
 # more than 99. acc on tst set ? 
@@ -175,8 +175,8 @@ def get_heavy_config():
     # model.add(64, activation="relu")
     # model.add(32, activation="relu")
     # model.add(2, activation="softmax")
-    # model.compile((28, 28, 1), metrics=["accuracy"], optimizer=SGD(momentum=0.9))
-    model.compile((28, 28, 1), metrics=["accuracy"], optimizer='Adam')
+    # model.compile((28, 28, 1), metrics=["categorical_accuracy"], optimizer=SGD(momentum=0.9))
+    model.compile((28, 28, 1), metrics=["categorical_accuracy"], optimizer='Adam')
     
     model.summary()
     return model
@@ -213,8 +213,8 @@ if __name__ == "__main__":
     model.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
     )
-    plt.plot(history['accuracy'])
-    plt.plot(history['val_accuracy'])
+    plt.plot(history['categorical_accuracy'])
+    plt.plot(history['val_categorical_accuracy'])
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')

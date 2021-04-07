@@ -8,7 +8,7 @@ class Adagrad:
         self.learning_rate = learning_rate
         self.initial_acc_value = initial_acc_value
         self.epsilon = epsilon
-        
+
         self.acc = []
         self.apply_gradient = None
         self.apply_gradient = self.adagrad
@@ -28,9 +28,9 @@ class Adagrad:
             weight -= lr / np.sqrt(self.acc[i] + e) * gradient
 
     def __str__(self):
-        return "Adagrad:\n\t\
+        return 'Adagrad:\n\t\
                 learning rate= {}\t\
                 initial_acc_value= {}\t\
-                epsilon= {}".format(self.learning_rate,
+                epsilon= {}'.format(self.learning_rate,
                                     self.initial_acc_valule,
                                     self.epsilon)

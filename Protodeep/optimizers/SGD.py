@@ -34,13 +34,6 @@ class SGD:
             self.velocity[i] = self.velocity[i] * m - lr * gradient
             weight += self.velocity[i]
 
-    # def nesterov_sgd(self, weights, gradients):
-    #     lr = self.learning_rate
-    #     m = self.momentum
-    #     for i, (weight, gradient) in enumerate(zip(weights, gradients)):
-    #         self.velocity[i] = self.velocity[i] * m - lr * gradient
-    #         weight += (self.velocity[i] - lr * gradient)
-
     def __str__(self):
         return 'SGD:\n\t\
             learning rate= {}\t\

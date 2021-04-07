@@ -1,9 +1,9 @@
 import numpy as np
 
 
-class Accuracy:
+class BinaryAccuracy:
 
-    def __init__(self, name='accuracy'):
+    def __init__(self, name='binary_accuracy'):
         self.name = name
         self.count = 0
         self.total = 0
@@ -21,4 +21,4 @@ class Accuracy:
     def update_state(self, predictions, targets):
         for prediction, target in zip(predictions, targets):
             self.total += prediction.size
-            self.count += np.sum(np.abs(prediction - target) < self.epsilon)
+            self.count += np.sum(np.abs(prediction - target) < 0.5)

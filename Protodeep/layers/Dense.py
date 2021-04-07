@@ -1,7 +1,8 @@
 import numpy as np
-from numba import njit
+# from numba import njit
 
-from Protodeep.utils.parse import parse_activation, parse_initializer, parse_regularizer
+from Protodeep.utils.parse import parse_activation
+from Protodeep.utils.parse import parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
 
@@ -30,7 +31,8 @@ class Dense(Layer):
     def __init__(self, units, activation=None, use_bias=True,
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros', kernel_regularizer=None,
-                 bias_regularizer=None, activity_regularizer=None, name='dense'):
+                 bias_regularizer=None, activity_regularizer=None,
+                 name='dense'):
         super().__init__(trainable=True, name=name)
         self.weights = None
         self.w_grad = None
@@ -101,7 +103,9 @@ class Dense(Layer):
                 list of gradients (same order as get_trainable_weights),
                 and derivative of loss with respect to input of this layer
         """
-        # self.dloss = backward(self.w_grad, self.b_grad, inputs, self.activation.derivative(self.z_val), self.i_val, self.weights, inputs.shape[0])
+        # self.dloss = backward(self.w_grad, self.b_grad, inputs,
+        # self.activation.derivative(self.z_val), self.i_val,
+        # self.weights, inputs.shape[0])
 
         if self.activity_regularizer:
             inputs = inputs + self.activity_regularizer.derivative(inputs)
@@ -118,13 +122,13 @@ class Dense(Layer):
 
         self.regularize()
         return self.get_gradients(), self.dloss
-        
+
     def get_trainable_weights(self):
         return [self.weights, self.biases] if self.use_bias else [self.weights]
 
     def get_gradients(self):
         return [self.w_grad, self.b_grad] if self.use_bias else [self.w_grad]
-    
+
     def set_weights(self, weights):
         if len(weights) != len(self.get_trainable_weights()):
             print('invalid weights list dense')

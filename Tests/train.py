@@ -44,10 +44,11 @@ def parse_options():
 
 def get_model_regularizers():
     model = Model()
-    model.add(Protodeep.layers.Dense(64, activation=Protodeep.activations.Relu(), kernel_regularizer=Protodeep.regularizers.L1L2()))
+    # model.add(Protodeep.layers.Dense(64, activation=Protodeep.activations.Relu(), kernel_regularizer=Protodeep.regularizers.L1L2()))
+    model.add(Protodeep.layers.Dense(64, activation=Protodeep.activations.Relu(), kernel_regularizer=''))
     model.add(Protodeep.layers.Dense(32, activation=Protodeep.activations.Relu(), kernel_regularizer=''))
     model.add(Protodeep.layers.Dense(2, activation=Protodeep.activations.Softmax()))
-    model.compile(30, metrics=[Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
+    model.compile(30, metrics=[Protodeep.metrics.CategoricalAccuracy(), Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
     model.summary()
     return model
 
@@ -56,7 +57,7 @@ def get_basic_model():
     model.add(Protodeep.layers.Dense(64, activation=Protodeep.activations.Relu()))
     model.add(Protodeep.layers.Dense(32, activation=Protodeep.activations.Relu()))
     model.add(Protodeep.layers.Dense(2, activation=Protodeep.activations.Sigmoid()))
-    model.compile(30, metrics=[Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
+    model.compile(30, metrics=[Protodeep.metrics.CategoricalAccuracy(), Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
     model.summary()
     return model
 
@@ -72,7 +73,7 @@ def get_troll_model_for_bonuses():
     # model.add(Protodeep.layers.64, activation=Protodeep.activations.Relu())
     # model.add(Protodeep.layers.32, activation=Protodeep.activations.Relu())
     # model.add(Protodeep.layers.2, activation=Protodeep.activations.Softmax())
-    model.compile((5, 6, 1), metrics=[Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
+    model.compile((5, 6, 1), metrics=[Protodeep.metrics.CategoricalAccuracy(), Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
     model.summary()
     return model
 
@@ -105,18 +106,24 @@ if __name__ == "__main__":
         validation_data=(dataset.test_features, dataset.test_targets)
     )
     # model.save_weights()
+    plt.plot(history['categorical_accuracy'])
+    plt.plot(history['val_categorical_accuracy'])
     plt.plot(history['accuracy'])
     plt.plot(history['val_accuracy'])
-    plt.ylabel('accuracy')
+    plt.ylabel('categorical_accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
+    plt.legend([
+        'categorical_accuracy',
+        'val_categorical_accuracy',
+        'accuracy',
+        'val_accuracy'], loc='lower right')
     plt.show()
 
     plt.plot(history['loss'])
     plt.plot(history['val_loss'])
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
+    plt.legend(['train', 'validation'], loc='upper right')
     plt.show()
     # print("val_loss", val_loss)
     # e = np.array([1, 2, 3])

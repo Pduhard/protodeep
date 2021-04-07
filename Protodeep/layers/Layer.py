@@ -13,17 +13,14 @@ class Layer:
         if self.__class__.total_instance > 0:
             name += '_' + str(self.__class__.total_instance)
         self.__class__.total_instance += 1
-        
+
         self.name = name
         self.dtype = dtype
         self.dynamic = dynamic
         self.layer_dico[name] = self
-        self.locked = False  # used by model class to build ùultiple graphs
+        self.locked = False  # used by model class to build multiple graphs
 
     def __call__(self, connectors):
-        """
-            take a Connector obj or list/tuple and set input_connectors to connectors
-        """
         self.input_connectors = connectors
 
     def compile(self, input_shape):

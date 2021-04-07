@@ -7,7 +7,8 @@ class EarlyStopping(CallBack):
     """
         Early Stopping callback
 
-        used to stop training when the monitored metrics does not show improvement over epochs
+        used to stop training when the monitored metrics
+        does not show improvement over epochs
 
         monitor: value to monitor
         min_delta: minimal delta value considered as an improvement
@@ -33,7 +34,7 @@ class EarlyStopping(CallBack):
         self.best = np.inf
 
     def on_epoch_end(self, logs=None):
-        """ for instance return True = continue, return False = stop fitting """
+        """ return True = continue, return False = stop fitting """
 
         if logs is None or self.monitor not in logs:
             print("Warning: EarlyStopping: \

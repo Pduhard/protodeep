@@ -11,7 +11,6 @@ def build_graph(self, inputs, outputs):
 
     def get_next_level(graph, current_level, next_order, depth, way):
         next_level = []
-        print(current_level)
         for curr in current_level:
             graph[curr][f'used{way}'] = 1
             for next_l in graph[curr][way]:
@@ -20,7 +19,6 @@ def build_graph(self, inputs, outputs):
                     graph[next_l]['order'] = next_order
                     graph[next_l]['depth'] = depth
                 next_order += 1
-        print(next_level)
         return next_level, next_order
 
     def order_graph(graph, inputs, outputs):
@@ -79,30 +77,22 @@ def build_graph(self, inputs, outputs):
 
     order_graph(self.graph, inputs, outputs)
     self.flatten_graph = [
-        ldict[layer]
-        for layer
-        in sorted(self.graph, key=lambda l: self.graph[l]['order']) if self.graph[layer]['usednexts'] == self.graph[layer]['usedprevs'] == 1
+        ldict[ly]
+        for ly
+        in sorted(self.graph, key=lambda l: self.graph[l]['order'])
+        if self.graph[ly]['usednexts'] == self.graph[ly]['usedprevs'] == 1
     ]
     for layer in self.flatten_graph:
         layer.locked = True
 
-    print(self.graph)
     self.inputs = [i.layer for i in inputs]
-    # print(self.inputs)
     self.outputs = [o.layer for o in outputs]
-    # print(self.outputs)
 
 
 def build(self):
     for layer in self.flatten_graph[::-1]:
         self.weights.extend(layer.get_trainable_weights())
         self.gradients.extend(layer.get_gradients())
-        # if layer.trainable is True:
-        #     self.weights.append(layer.weights)
-        #     self.gradients.append(layer.w_grad)
-        #     if layer.use_bias is True:
-        #         self.weights.append(layer.biases)
-        #         self.gradients.append(layer.b_grad)
 
 
 def compile(self, features_shape, loss="BinaryCrossentropy",
