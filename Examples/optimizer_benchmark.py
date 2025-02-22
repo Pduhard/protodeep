@@ -1,36 +1,9 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
-
+from os import path
 import Protodeep as P
 from dataset import Dataset
-
-
-# def parse_option_value(opt, dflt):
-#     if opt in sys.argv and sys.argv.index(opt) + 1 != len(sys.argv):
-#         return sys.argv[sys.argv.index(opt) + 1]
-#     return dflt
-
-
-# def usage():
-#     print("usage : blabla")
-#     quit()
-
-
-# def check_option(options):
-#     return True
-
-
-# def parse_options():
-#     options = {
-#         'optimizer': parse_option_value('-o', dflt=None),
-#         'epoch': parse_option_value('-e', dflt='100'),
-#         'csv_name': parse_option_value('-n', dflt='data.csv')
-#         }
-#     if check_option(options) is False:
-#         usage()
-#     return options
-
 
 def get_model_Adam():
     model = P.model.Model()
@@ -114,16 +87,14 @@ def get_model_RMSProp_momentum():
     out = P.layers.Dense(2, activation='softmax')(d2)
 
     model = P.model.Model(inputs=i, outputs=out)
-    # print(opt)
-    # quit()
     model.compile(30, metrics=['Accuracy'], optimizer=P.optimizers.RMSProp(momentum=0.9))
     model.summary()
     return model
 
+csvPath  = path.join(path.dirname(__file__), 'data.csv')
 
 if __name__ == "__main__":
-    dataset = Dataset('data.csv')
-    # model = get_troll_model_for_bonuses()
+    dataset = Dataset(csvPath)
     model_SGD = get_model_SGD()
     model_SGD_momentum = get_model_SGD_momentum()
     model_RMSProp = get_model_RMSProp()

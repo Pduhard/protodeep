@@ -20,3 +20,6 @@ test:
 test_conv:
 	python3 Examples/train_conv.py -n Examples/mnist_784.csv
 
+optimizer_benchmark:
+	python3 Examples/optimizer_benchmark.py
+
