@@ -120,7 +120,7 @@ class Dataset:
             self.features, self.targets = parse_mnist_csv(file_name)
             self.split_dataset(test_split)
         elif 'BTC' in file_name:
-            self.features, self.targets = parse_btc()
+            self.features, self.targets = parse_btc(file_name)
         else:
             self.features, self.targets = parse_csv(file_name)
             self.features_stat = [Fstat(feature) for feature in self.features.T]

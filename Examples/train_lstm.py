@@ -13,7 +13,7 @@ from Protodeep.callbacks.EarlyStopping import EarlyStopping
 from Protodeep.optimizers.SGD import SGD
 # from ..dataset_tf import Dataset as Dttf
 
-from scalers.StandardScaler import StandardScaler
+from Scalers.StandardScaler import StandardScaler
 from Preprocessing.Split import Split
 
 def parse_option_value(opt, dflt):

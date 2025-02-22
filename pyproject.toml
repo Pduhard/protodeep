@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Protodeep"
+version = "0.1.0"
+authors = [{ name = "Pduhard" }]
+description = "homemade deeplearning library for learning purpose"
+readme = "README.md"
+keywords = ["lib"]
+requires-python = ">=3.8"
+dependencies = [
+    "matplotlib>=3.5.0",
+    "numpy>=1.21.0",
+    "numba>=0.55.0",
+    "PyQt6>=6.2.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "Protodeep",
+    "Protodeep.activations",
+    "Protodeep.callbacks",
+    "Protodeep.initializers",
+    "Protodeep.regularizers",
+    "Protodeep.layers",
+    "Protodeep.layers.connectors",
+    "Protodeep.losses",
+    "Protodeep.metrics",
+    "Protodeep.model",
+    "Protodeep.optimizers",
+    "Protodeep.utils"
+]
+
+[project.scripts]
+run-train = "Examples.train:main"
+run-train-conv = "Examples.train_conv:main"
+
+# Optional: Entry points for better CLI integration
+[project.optional-dependencies]
+test = []
+
+[tool.makefile]
+default-target = "help"
+
+[tool.makefile.targets]
+help.commands = [
+    "echo ---------------HELP-----------------",
+    "echo To setup the project and build packages type make setup",
+    "echo ------------------------------------"
+]
+
+setup.commands = [
+    "python -m pip install --upgrade pip",
+    "pip install ."
+]
+
+run.commands = [
+    "python Examples/train.py -n Examples/data.csv"
+]
+
+test.commands = [
+    "python Examples/train.py -n Examples/data.csv"
+]
+
+test_conv.commands = [
+    "python Examples/train_conv.py -n Examples/mnist_784.csv"
+]

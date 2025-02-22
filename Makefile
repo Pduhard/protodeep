@@ -1,14 +1,6 @@
-
 .PHONY = help setup test run
 
 .DEFAULT_GOAL = help
-UNAME := $(shell uname)
-
-ifeq ($(UNAME), Darwin)
-PYTHON=~/.brew/Cellar/python@3.8/3.8.8_1/bin/python3.8
-else
-PYTHON=python
-endif
 
 help:
 	@echo ---------------HELP-----------------
@@ -16,17 +8,15 @@ help:
 	@echo ------------------------------------
 
 setup:
-	@echo $(PYTHON)
-	@echo $(UNAME)
-	$(PYTHON) setup.py build
-	$(PYTHON) setup.py install
+	python3 -m pip install --upgrade pip
+	pip install .
 
 run:
-	@python Tests/train.py -n Tests/data.csv
+	python3 Examples/train.py -n Examples/data.csv
 
 test:
-	@python Tests/train.py -n Tests/data.csv
+	python3 Examples/train.py -n Examples/data.csv
 
 test_conv:
-	@python Tests/train_conv.py -n Tests/mnist_784.csv
+	python3 Examples/train_conv.py -n Examples/mnist_784.csv
 

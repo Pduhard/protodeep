@@ -6,19 +6,15 @@ from Protodeep.layers.MaxPool2D import MaxPool2D
 from Protodeep.layers.Flatten import Flatten
 from Protodeep.layers.Input import Input
 import sys
-# import numpy as np
 import matplotlib.pyplot as plt
 from Protodeep.callbacks.EarlyStopping import EarlyStopping
 from Protodeep.optimizers.SGD import SGD
-# from ..dataset_tf import Dataset as Dttf
-
 
 def parse_option_value(opt, dflt):
     if opt in sys.argv:
         if sys.argv.index(opt) + 1 != len(sys.argv):
             return sys.argv[sys.argv.index(opt) + 1]
     return dflt
-
 
 def usage():
     print("usage : blabla")
@@ -44,9 +40,6 @@ def parse_options():
 
 import numpy as np
 import matplotlib.pyplot as plt
-# from sklearn.preprocessing import StandardScaler
-# import tensorflow as tf
-
 
 def parse_mnist():
     (train_X, train_Y), (test_X, test_Y) = tf.keras.datasets.mnist.load_data()

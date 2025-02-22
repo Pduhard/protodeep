@@ -1,4 +1,4 @@
-from scalers.Scaler import Scaler
+from Scalers.Scaler import Scaler
 from stats import Stats
 import numpy as np
 import json
