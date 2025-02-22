@@ -32,8 +32,6 @@ class Split:
         for i in range(len(targets) - ssize):
             wfeatures.append(features[i:i+ssize])
             wtargets.append(targets[i+ssize][0])
-        # for d in dataset[:10]:
-        #     print(d)
         wfeatures = np.array(wfeatures).astype(np.float32)
         wtargets = np.array(wtargets).astype(np.float32)
         return wfeatures, wtargets
