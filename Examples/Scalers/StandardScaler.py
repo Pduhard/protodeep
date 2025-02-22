@@ -3,7 +3,6 @@ from stats import Stats
 import numpy as np
 import json
 
-
 class StandardScaler(Scaler):
 
     def __init__(self):
@@ -11,8 +10,6 @@ class StandardScaler(Scaler):
         self.std = None
 
     def fit(self, dataset):
-        # self.mean = np.mean(dataset, axis=0)
-        # self.std = np.std(dataset, axis=0)
         self.mean = Stats.mean(dataset)
         self.std = Stats.std(dataset, mean=self.mean)
         return self

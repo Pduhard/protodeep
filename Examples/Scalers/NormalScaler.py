@@ -3,7 +3,6 @@ from stats import Stats
 import numpy as np
 import json
 
-
 class NormalScaler(Scaler):
 
     def __init__(self):
@@ -11,8 +10,6 @@ class NormalScaler(Scaler):
         self.max = None
 
     def fit(self, dataset):
-        # self.mean = np.mean(dataset, axis=0)
-        # self.std = np.std(dataset, axis=0)
         self.min = Stats.min(dataset)
         self.max = Stats.max(dataset)
         return self
