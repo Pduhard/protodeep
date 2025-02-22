@@ -102,17 +102,12 @@ class LSTM(Layer):
         )
 
     def __call__(self, connectors):
-        # if isinstance(connectors.shape, tuple):
-        #     connectors.shape = connectors.shape[-1]
         print(connectors.shape)
         timesteps, feature = connectors.shape
 
         weight_shape = (feature, self.units)
         hidden_weight_shape = (self.units, self.units)
-        # gate_shape = (timesteps, )
 
-        # print(weight_shape)
-        # quit()
         self.wf = self.recurrent_initializer(weight_shape)
         self.wi = self.recurrent_initializer(weight_shape)
         self.wo = self.recurrent_initializer(weight_shape)

@@ -226,9 +226,6 @@ class Conv2D(Layer):
             ( batch_size, height, width, channel )
         """
 
-        # if inputs.shape[1:] != self.input_connectors.shape:
-        #     _shape_error(self.input_connectors.shape, inputs.shape[1:])
-
         N, H, W, C = inputs.shape
         SH, SW = self.strides
         KH, KW = self.kernel_size

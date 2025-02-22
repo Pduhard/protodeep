@@ -1,27 +1,9 @@
 import numpy as np
-# from numba import njit
 
 from Protodeep.utils.parse import parse_activation
 from Protodeep.utils.parse import parse_initializer, parse_regularizer
 from Protodeep.utils.debug import class_timer
 from Protodeep.layers.Layer import Layer
-
-# @njit
-# def dense_preactiv(inputs, weights, biases):
-#     return np.dot(inputs, weights) + biases
-
-
-# !!! ceci est de la grosse merde jpp too slow
-# @njit
-# def backward(w_grad, b_grad, inputs, a_dp, i_val, weights, batch_size):
-#     w_grad.fill(0)
-#     b_grad.fill(0)
-#     z_dp = (inputs * a_dp).T
-#     w_grad += (z_dp @ i_val).T / batch_size
-#     for i in range(batch_size):
-#         b_grad[i] += z_dp[i]
-#     return (weights @ z_dp).T
-
 
 @class_timer
 class Dense(Layer):
@@ -103,9 +85,6 @@ class Dense(Layer):
                 list of gradients (same order as get_trainable_weights),
                 and derivative of loss with respect to input of this layer
         """
-        # self.dloss = backward(self.w_grad, self.b_grad, inputs,
-        # self.activation.derivative(self.z_val), self.i_val,
-        # self.weights, inputs.shape[0])
 
         if self.activity_regularizer:
             inputs = inputs + self.activity_regularizer.derivative(inputs)

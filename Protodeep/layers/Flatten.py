@@ -1,7 +1,6 @@
 import numpy as np
 
 from Protodeep.layers.Layer import Layer
-# from utils.parse import parse_activation, parse_initializer
 from Protodeep.utils.debug import class_timer
 
 

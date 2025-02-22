@@ -1,8 +1,4 @@
 import numpy as np
-# from numba import njit
-# from numba import jit, vectorize
-# from activations.Relu import Relu
-# from activations.Softmax import Softmax
 from Protodeep.utils.format import cwrap_list, wrap_tlist
 from Protodeep.utils.debug import class_timer
 

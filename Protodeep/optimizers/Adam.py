@@ -1,10 +1,4 @@
 import numpy as np
-# from numba import njit
-
-
-# @njit
-def test(lr, v_at, epsilon, m_at):
-    return (lr / (np.sqrt(v_at) + epsilon)) * m_at
 
 
 class Adam:
