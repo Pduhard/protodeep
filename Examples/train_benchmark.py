@@ -73,36 +73,22 @@ def get_basic_model_RMSProp():
 def get_troll_model_for_bonuses():
     model = P.model.Model()
     model.add(P.layers.Conv2D(filters=30, kernel_size=(2, 2), activation=P.activations.Relu()))
-    # model.add(P.layers.MaxPool2D(pool_size=(2, 2)))
     model.add(P.layers.Flatten())
     model.add(P.layers.Dense(32, activation=P.activations.Relu()))
-    # model.add(P.layers.Dense(32, activation="linear"))
     model.add(P.layers.Dense(2, activation=P.activations.Softmax()))
-    # model.add(P.layers.64, activation=P.activations.Relu())
-    # model.add(P.layers.32, activation=P.activations.Relu())
-    # model.add(P.layers.2, activation=P.activations.Softmax())
     model.compile((5, 6, 1), metrics=[P.metrics.Accuracy()], optimizer=P.optimizers.RMSProp())
     model.summary()
     return model
 
 if __name__ == "__main__":
     options = parse_options()
-    # print(options)
-    # dataset = Dataset("../data_training.csv")
-    # dataset_test = Dataset("../data_test.csv")
     dataset = Dataset(options['csv_name'], 0.2)
-    # model = get_troll_model_for_bonuses()
     modelreg = get_model_regularizers()
     model_simple = get_basic_model()
     model_rms = get_basic_model_RMSProp()
 
     print(dataset.features.shape)
     print(dataset.test_features.shape)
-    # print(dataset.features.shape)
-    # print(numpy.min(model.weights[0]))
-    # model.load_weights()
-    # .reshape((455, 5, 6, 1))
-    # .reshape((114, 5, 6, 1))
     history_reg = modelreg.fit(
         features=dataset.features,
         targets=dataset.targets,
@@ -116,7 +102,6 @@ if __name__ == "__main__":
     print(modelreg.evaluate(
         validation_data=(dataset.test_features, dataset.test_targets)
     ))
-    # print('eval ok ok')
 
     history_simple = model_simple.fit(
         features=dataset.features,
@@ -167,22 +152,5 @@ if __name__ == "__main__":
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
-    # model.save_weights()
-    # plt.plot(history_reg['accuracy'])
-    # plt.plot(history_reg['val_accuracy'])
-    # plt.ylabel('accuracy')
-    # plt.xlabel('epoch')
-    # plt.legend(['train', 'validation'], loc='upper left')
-    # plt.show()
 
 
-    # plt.plot(history_reg['loss'])
-    # plt.plot(history_reg['val_loss'])
-    # plt.ylabel('loss')
-    # plt.xlabel('epoch')
-    # plt.legend(['train', 'validation'], loc='upper left')
-    # plt.show()
-    # print("val_loss", val_loss)
-    # e = np.array([1, 2, 3])
-    # test(e)
-    # print(e)

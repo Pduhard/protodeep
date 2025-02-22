@@ -23,3 +23,5 @@ test_conv:
 optimizer_benchmark:
 	python3 Examples/optimizer_benchmark.py
 
+train_2output:
+	python3 Examples/optimizer_benchmark.py

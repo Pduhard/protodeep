@@ -3,10 +3,9 @@ from Protodeep.model.model import Model
 from Protodeep.layers.Dense import Dense
 from Protodeep.layers.Input import Input
 import sys
-import numpy as np
 import matplotlib.pyplot as plt
 from Protodeep.callbacks.EarlyStopping import EarlyStopping
-
+from os import path
 
 def parse_option_value(opt, dflt):
     if opt in sys.argv:
@@ -33,13 +32,11 @@ def parse_options():
         usage()
     return options
 
+csvPath  = path.join(path.dirname(__file__), 'data.csv')
 
 if __name__ == "__main__":
     options = parse_options()
-    # print(options)
-    # dataset = Dataset("../data_training.csv")
-    # dataset_test = Dataset("../data_test.csv")
-    dataset = Dataset("data.csv", 0.2)
+    dataset = Dataset(csvPath, 0.2)
     i = Input((30))()
     i2 = Input((30))()
     d1 = Dense(64, activation="relu")(i)
@@ -54,17 +51,9 @@ if __name__ == "__main__":
     out3 = Dense(2, activation="softmax")(d3)
 
     model = Model(inputs=[i, i2], outputs=[out1, out2, out3])
-    # model.add()
-    # model.add(Dense(32, activation="relu"))
-    # model.add()
-    # model.add(64, activation="relu")
-    # model.add(32, activation="relu")
-    # model.add(2, activation="softmax")
     model.compile(30, metrics=["accuracy"], optimizer="Adam")
     print(dataset.features.shape)
     print(dataset.test_features.shape)
-    # print(dataset.features.shape)
-    # print(numpy.min(model.weights[0]))
 
     model.summary()
     history = model.fit(
@@ -91,10 +80,3 @@ if __name__ == "__main__":
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper left')
     plt.show()
-
-    # print(model.predict([dataset.test_features[1], dataset.test_features[1]]))
-    # print(dataset.test_targets[1])
-    # print("val_loss", val_loss)
-    # e = np.array([1, 2, 3])
-    # test(e)
-    # print(e)
