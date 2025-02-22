@@ -14,7 +14,7 @@ setup:
 run:
 	python3 Examples/train.py -n Examples/data.csv
 
-test:
+example:
 	python3 Examples/train.py -n Examples/data.csv
 
 test_conv:

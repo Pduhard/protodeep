@@ -63,7 +63,13 @@ def get_troll_model_for_bonuses():
 if __name__ == "__main__":
     options = parse_options()
     dataset = Dataset(options['csv_name'], 0.2)
-    model = get_model_regularizers()
+
+    model = Model()
+    model.add(Protodeep.layers.Dense(64, activation=Protodeep.activations.Relu()))
+    model.add(Protodeep.layers.Dense(32, activation=Protodeep.activations.Relu()))
+    model.add(Protodeep.layers.Dense(2, activation=Protodeep.activations.Sigmoid()))
+    model.compile(30, metrics=[Protodeep.metrics.CategoricalAccuracy(), Protodeep.metrics.Accuracy()], optimizer=Protodeep.optimizers.Adam())
+    model.summary()
 
     print(dataset.features.shape)
     print(dataset.test_features.shape)
