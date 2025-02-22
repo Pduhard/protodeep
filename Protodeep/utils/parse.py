@@ -12,7 +12,6 @@ from Protodeep.activations.Tanh import Tanh
 from Protodeep.optimizers.SGD import SGD
 from Protodeep.optimizers.Adagrad import Adagrad
 from Protodeep.optimizers.RMSProp import RMSProp
-from Protodeep.optimizers.Adadelta import Adadelta
 from Protodeep.optimizers.Adam import Adam
 from Protodeep.metrics.Accuracy import Accuracy
 from Protodeep.metrics.CategoricalAccuracy import CategoricalAccuracy
@@ -70,8 +69,6 @@ def parse_optimizer(optimizer):
         return RMSProp()
     elif optimizer == "adam":
         return Adam()
-    elif optimizer == "adadelta":
-        return Adadelta()
     else:
         return Adam()
 
